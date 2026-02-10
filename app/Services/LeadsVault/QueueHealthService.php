@@ -11,11 +11,11 @@ class QueueHealthService
     {
         $isCronWorkerMode = (string) config('monitoring.queue.worker_mode', 'process') === 'cron';
 
-        $queues = [
-            'imports' => ['expected' => 2, 'program' => 'grade-imports:'],
-            'normalize' => ['expected' => 2, 'program' => 'grade-normalize:'],
-            'extras' => ['expected' => 1, 'program' => 'grade-extras:'],
-        ];
+        $queues = (array) config('monitoring.queues', [
+            'imports'   => ['expected' => 2, 'program' => 'grade-imports:*'],
+            'normalize' => ['expected' => 2, 'program' => 'grade-normalize:*'],
+            'extras'    => ['expected' => 1, 'program' => 'grade-extras:*'],
+        ]);
 
         $supervisorStatuses = $this->readSupervisorStatuses();
         $workers = [];
@@ -24,7 +24,7 @@ class QueueHealthService
 
         foreach ($queues as $queue => $meta) {
             $expected = $isCronWorkerMode ? 0 : (int) $meta['expected'];
-            $programPrefix = (string) $meta['program'];
+            $programPrefix = rtrim((string) ($meta['program'] ?? ''), '*');
 
             $statusRows = [];
             if ($supervisorStatuses !== null) {
@@ -92,7 +92,18 @@ class QueueHealthService
      */
     private function readSupervisorStatuses(): ?array
     {
-        $output = $this->runShell('supervisorctl status grade-imports:* grade-normalize:* grade-extras:* 2>&1');
+        $queues = (array) config('monitoring.queues', []);
+        $programs = [];
+        foreach ($queues as $meta) {
+            $program = (string) ($meta['program'] ?? '');
+            if ($program !== '') {
+                $programs[] = escapeshellarg($program);
+            }
+        }
+        if ($programs === []) {
+            return null;
+        }
+        $output = $this->runShell('supervisorctl status ' . implode(' ', $programs) . ' 2>&1');
         if (!is_string($output) || trim($output) === '') {
             return null;
         }

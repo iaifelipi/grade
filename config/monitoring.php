@@ -12,4 +12,15 @@ return [
         'fail_15m_warning' => (int) env('MONITORING_QUEUE_FAIL_15M_WARNING', 3),
         'fail_15m_critical' => (int) env('MONITORING_QUEUE_FAIL_15M_CRITICAL', 10),
     ],
+    'queues' => [
+        'imports'   => ['expected' => 2, 'program' => 'grade-imports:*'],
+        'normalize' => ['expected' => 2, 'program' => 'grade-normalize:*'],
+        'extras'    => ['expected' => 1, 'program' => 'grade-extras:*'],
+    ],
+    'cache' => [
+        'scheduler_ttl' => (int) env('MONITORING_CACHE_SCHEDULER_TTL', 15),
+        'disk_ttl'      => (int) env('MONITORING_CACHE_DISK_TTL', 30),
+        'external_ttl'  => (int) env('MONITORING_CACHE_EXTERNAL_TTL', 15),
+        'redis_ttl'     => (int) env('MONITORING_CACHE_REDIS_TTL', 10),
+    ],
 ];

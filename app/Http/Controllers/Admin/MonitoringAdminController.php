@@ -8,6 +8,7 @@ use App\Services\LeadsVault\QueueHealthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Schema;
@@ -62,48 +63,52 @@ class MonitoringAdminController extends Controller
 
     private function schedulerHealth(): array
     {
-        $hasScheduleWork = false;
-        $hasCronScheduleRun = false;
-        $cronSample = null;
+        $ttl = (int) config('monitoring.cache.scheduler_ttl', 15);
 
-        $pgrepOutput = $this->runShell('pgrep -af "artisan schedule:work" 2>/dev/null');
-        if (is_string($pgrepOutput) && trim($pgrepOutput) !== '') {
-            $hasScheduleWork = true;
-        }
+        return Cache::remember('monitoring:scheduler_health', $ttl, function () {
+            $hasScheduleWork = false;
+            $hasCronScheduleRun = false;
+            $cronSample = null;
 
-        $crontabOutput = $this->runShell('crontab -l 2>/dev/null');
-        if (is_string($crontabOutput) && trim($crontabOutput) !== '') {
-            $lines = preg_split('/\r?\n/', trim($crontabOutput)) ?: [];
-            foreach ($lines as $line) {
-                if (str_contains($line, 'artisan') && str_contains($line, 'schedule:run')) {
-                    $hasCronScheduleRun = true;
-                    $cronSample = trim((string) $line);
-                    break;
+            $pgrepOutput = $this->runShell('pgrep -af "artisan schedule:work" 2>/dev/null');
+            if (is_string($pgrepOutput) && trim($pgrepOutput) !== '') {
+                $hasScheduleWork = true;
+            }
+
+            $crontabOutput = $this->runShell('crontab -l 2>/dev/null');
+            if (is_string($crontabOutput) && trim($crontabOutput) !== '') {
+                $lines = preg_split('/\r?\n/', trim($crontabOutput)) ?: [];
+                foreach ($lines as $line) {
+                    if (str_contains($line, 'artisan') && str_contains($line, 'schedule:run')) {
+                        $hasCronScheduleRun = true;
+                        $cronSample = trim((string) $line);
+                        break;
+                    }
                 }
             }
-        }
 
-        $lastMaintenanceAt = null;
-        if (Schema::hasTable('jobs')) {
-            $latestAvailableAt = DB::table('jobs')
-                ->where('queue', 'maintenance')
-                ->max('available_at');
-            if ($latestAvailableAt) {
-                $lastMaintenanceAt = now()->setTimestamp((int) $latestAvailableAt)->toIso8601String();
+            $lastMaintenanceAt = null;
+            if (Schema::hasTable('jobs')) {
+                $latestAvailableAt = DB::table('jobs')
+                    ->where('queue', 'maintenance')
+                    ->max('available_at');
+                if ($latestAvailableAt) {
+                    $lastMaintenanceAt = now()->setTimestamp((int) $latestAvailableAt)->toIso8601String();
+                }
             }
-        }
 
-        $status = ($hasScheduleWork || $hasCronScheduleRun) ? 'healthy' : 'warning';
-        $mode = $hasScheduleWork ? 'schedule_work' : ($hasCronScheduleRun ? 'cron_schedule_run' : 'unknown');
+            $status = ($hasScheduleWork || $hasCronScheduleRun) ? 'healthy' : 'warning';
+            $mode = $hasScheduleWork ? 'schedule_work' : ($hasCronScheduleRun ? 'cron_schedule_run' : 'unknown');
 
-        return [
-            'status' => $status,
-            'mode' => $mode,
-            'schedule_work_running' => $hasScheduleWork,
-            'cron_schedule_run_configured' => $hasCronScheduleRun,
-            'cron_sample' => $cronSample,
-            'last_maintenance_job_at' => $lastMaintenanceAt,
-        ];
+            return [
+                'status' => $status,
+                'mode' => $mode,
+                'schedule_work_running' => $hasScheduleWork,
+                'cron_schedule_run_configured' => $hasCronScheduleRun,
+                'cron_sample' => $cronSample,
+                'last_maintenance_job_at' => $lastMaintenanceAt,
+            ];
+        });
     }
 
     private function dbHealth(array $thresholds): array
@@ -194,39 +199,43 @@ class MonitoringAdminController extends Controller
 
     private function externalServicesHealth(): array
     {
-        $services = [];
+        $ttl = (int) config('monitoring.cache.external_ttl', 15);
 
-        $smsUrl = trim((string) config('automation_dispatch.sms.webhook_url', ''));
-        $services[] = $this->probeWebhookService('sms_webhook', $smsUrl);
+        return Cache::remember('monitoring:external_services', $ttl, function () {
+            $services = [];
 
-        $whatsUrl = trim((string) config('automation_dispatch.whatsapp.webhook_url', ''));
-        $services[] = $this->probeWebhookService('whatsapp_webhook', $whatsUrl);
+            $smsUrl = trim((string) config('automation_dispatch.sms.webhook_url', ''));
+            $services[] = $this->probeWebhookService('sms_webhook', $smsUrl);
 
-        $mailDriver = (string) config('mail.default', 'smtp');
-        $smtpHost = trim((string) config('mail.mailers.smtp.host', ''));
-        $smtpPort = (int) config('mail.mailers.smtp.port', 587);
-        if ($mailDriver === 'smtp' && $smtpHost !== '') {
-            $probe = $this->probeTcp($smtpHost, max(1, $smtpPort), 1.5);
-            $services[] = [
-                'service' => 'smtp',
-                'status' => $probe['status'],
-                'target' => "{$smtpHost}:{$smtpPort}",
-                'latency_ms' => $probe['latency_ms'],
-                'error' => $probe['error'],
-                'enabled' => true,
-            ];
-        } else {
-            $services[] = [
-                'service' => 'smtp',
-                'status' => 'info',
-                'target' => $mailDriver !== '' ? $mailDriver : 'n/a',
-                'latency_ms' => null,
-                'error' => null,
-                'enabled' => false,
-            ];
-        }
+            $whatsUrl = trim((string) config('automation_dispatch.whatsapp.webhook_url', ''));
+            $services[] = $this->probeWebhookService('whatsapp_webhook', $whatsUrl);
 
-        return $services;
+            $mailDriver = (string) config('mail.default', 'smtp');
+            $smtpHost = trim((string) config('mail.mailers.smtp.host', ''));
+            $smtpPort = (int) config('mail.mailers.smtp.port', 587);
+            if ($mailDriver === 'smtp' && $smtpHost !== '') {
+                $probe = $this->probeTcp($smtpHost, max(1, $smtpPort), 1.5);
+                $services[] = [
+                    'service' => 'smtp',
+                    'status' => $probe['status'],
+                    'target' => "{$smtpHost}:{$smtpPort}",
+                    'latency_ms' => $probe['latency_ms'],
+                    'error' => $probe['error'],
+                    'enabled' => true,
+                ];
+            } else {
+                $services[] = [
+                    'service' => 'smtp',
+                    'status' => 'info',
+                    'target' => $mailDriver !== '' ? $mailDriver : 'n/a',
+                    'latency_ms' => null,
+                    'error' => null,
+                    'enabled' => false,
+                ];
+            }
+
+            return $services;
+        });
     }
 
     private function probeWebhookService(string $name, string $url): array
@@ -321,16 +330,61 @@ class MonitoringAdminController extends Controller
 
     private function redisCacheHealth(): array
     {
-        $status = 'info';
-        $message = 'Cache/Redis não configurado.';
-        $ping = null;
-        $memoryUsed = null;
-        $evictedKeys = null;
-        $hitRate = null;
-        $cacheDriver = (string) config('cache.default', 'file');
-        $details = [];
+        $ttl = (int) config('monitoring.cache.redis_ttl', 10);
 
-        if (!in_array($cacheDriver, ['redis', 'memcached'], true) && !config('database.redis.default')) {
+        return Cache::remember('monitoring:redis_health', $ttl, function () {
+            $status = 'info';
+            $message = 'Cache/Redis não configurado.';
+            $ping = null;
+            $memoryUsed = null;
+            $evictedKeys = null;
+            $hitRate = null;
+            $cacheDriver = (string) config('cache.default', 'file');
+            $details = [];
+
+            if (!in_array($cacheDriver, ['redis', 'memcached'], true) && !config('database.redis.default')) {
+                return [
+                    'status' => $status,
+                    'message' => $message,
+                    'cache_driver' => $cacheDriver,
+                    'ping' => $ping,
+                    'memory_used' => $memoryUsed,
+                    'evicted_keys' => $evictedKeys,
+                    'hit_rate' => $hitRate,
+                    'details' => $details,
+                ];
+            }
+
+            try {
+                $conn = Redis::connection();
+                $pong = $conn->ping();
+                $ping = is_scalar($pong) ? strtolower((string) $pong) : 'ok';
+
+                $infoMemory = $conn->command('INFO', ['memory']);
+                $infoStats = $conn->command('INFO', ['stats']);
+
+                $memory = $this->parseRedisInfo($infoMemory);
+                $stats = $this->parseRedisInfo($infoStats);
+
+                $memoryUsed = (string) ($memory['used_memory_human'] ?? ($memory['used_memory'] ?? '—'));
+                $evictedKeys = isset($stats['evicted_keys']) ? (int) $stats['evicted_keys'] : null;
+                $hits = isset($stats['keyspace_hits']) ? (int) $stats['keyspace_hits'] : 0;
+                $misses = isset($stats['keyspace_misses']) ? (int) $stats['keyspace_misses'] : 0;
+                $total = $hits + $misses;
+                $hitRate = $total > 0 ? round(($hits / $total) * 100, 2) : null;
+
+                $status = 'healthy';
+                $message = 'Redis/cache operacional.';
+                if ($evictedKeys !== null && $evictedKeys > 0) {
+                    $status = 'warning';
+                    $message = 'Redis com evictions detectados.';
+                }
+            } catch (\Throwable $e) {
+                $status = 'critical';
+                $message = 'Falha ao consultar Redis/cache.';
+                $details[] = $e->getMessage();
+            }
+
             return [
                 'status' => $status,
                 'message' => $message,
@@ -341,48 +395,7 @@ class MonitoringAdminController extends Controller
                 'hit_rate' => $hitRate,
                 'details' => $details,
             ];
-        }
-
-        try {
-            $conn = Redis::connection();
-            $pong = $conn->ping();
-            $ping = is_scalar($pong) ? strtolower((string) $pong) : 'ok';
-
-            $infoMemory = $conn->command('INFO', ['memory']);
-            $infoStats = $conn->command('INFO', ['stats']);
-
-            $memory = $this->parseRedisInfo($infoMemory);
-            $stats = $this->parseRedisInfo($infoStats);
-
-            $memoryUsed = (string) ($memory['used_memory_human'] ?? ($memory['used_memory'] ?? '—'));
-            $evictedKeys = isset($stats['evicted_keys']) ? (int) $stats['evicted_keys'] : null;
-            $hits = isset($stats['keyspace_hits']) ? (int) $stats['keyspace_hits'] : 0;
-            $misses = isset($stats['keyspace_misses']) ? (int) $stats['keyspace_misses'] : 0;
-            $total = $hits + $misses;
-            $hitRate = $total > 0 ? round(($hits / $total) * 100, 2) : null;
-
-            $status = 'healthy';
-            $message = 'Redis/cache operacional.';
-            if ($evictedKeys !== null && $evictedKeys > 0) {
-                $status = 'warning';
-                $message = 'Redis com evictions detectados.';
-            }
-        } catch (\Throwable $e) {
-            $status = 'critical';
-            $message = 'Falha ao consultar Redis/cache.';
-            $details[] = $e->getMessage();
-        }
-
-        return [
-            'status' => $status,
-            'message' => $message,
-            'cache_driver' => $cacheDriver,
-            'ping' => $ping,
-            'memory_used' => $memoryUsed,
-            'evicted_keys' => $evictedKeys,
-            'hit_rate' => $hitRate,
-            'details' => $details,
-        ];
+        });
     }
 
     /**
@@ -413,39 +426,43 @@ class MonitoringAdminController extends Controller
 
     private function diskStorageHealth(): array
     {
-        $status = 'healthy';
-        $message = 'Storage operacional.';
-        $paths = [
-            'storage_root' => storage_path(),
-            'storage_logs' => storage_path('logs'),
-            'storage_private' => storage_path('app/private'),
-            'tmp' => '/tmp',
-        ];
+        $ttl = (int) config('monitoring.cache.disk_ttl', 30);
 
-        $df = $this->readDiskFree($paths['storage_root']);
-        $inode = $this->readDiskInode($paths['storage_root']);
-        $sizes = [
-            'storage_logs' => $this->readDirSizeKb($paths['storage_logs']),
-            'storage_private' => $this->readDirSizeKb($paths['storage_private']),
-            'tmp' => $this->readDirSizeKb($paths['tmp']),
-        ];
+        return Cache::remember('monitoring:disk_health', $ttl, function () {
+            $status = 'healthy';
+            $message = 'Storage operacional.';
+            $paths = [
+                'storage_root' => storage_path(),
+                'storage_logs' => storage_path('logs'),
+                'storage_private' => storage_path('app/private'),
+                'tmp' => '/tmp',
+            ];
 
-        $usedPercent = (int) ($df['used_percent'] ?? 0);
-        if ($usedPercent >= 95) {
-            $status = 'critical';
-            $message = 'Disco com uso crítico.';
-        } elseif ($usedPercent >= 85) {
-            $status = 'warning';
-            $message = 'Disco com uso elevado.';
-        }
+            $df = $this->readDiskFree($paths['storage_root']);
+            $inode = $this->readDiskInode($paths['storage_root']);
+            $sizes = [
+                'storage_logs' => $this->readDirSizeKb($paths['storage_logs']),
+                'storage_private' => $this->readDirSizeKb($paths['storage_private']),
+                'tmp' => $this->readDirSizeKb($paths['tmp']),
+            ];
 
-        return [
-            'status' => $status,
-            'message' => $message,
-            'disk' => $df,
-            'inode' => $inode,
-            'sizes_kb' => $sizes,
-        ];
+            $usedPercent = (int) ($df['used_percent'] ?? 0);
+            if ($usedPercent >= 95) {
+                $status = 'critical';
+                $message = 'Disco com uso crítico.';
+            } elseif ($usedPercent >= 85) {
+                $status = 'warning';
+                $message = 'Disco com uso elevado.';
+            }
+
+            return [
+                'status' => $status,
+                'message' => $message,
+                'disk' => $df,
+                'inode' => $inode,
+                'sizes_kb' => $sizes,
+            ];
+        });
     }
 
     /**
@@ -508,25 +525,28 @@ class MonitoringAdminController extends Controller
     {
         $rows = [];
         if (Schema::hasTable('jobs')) {
-            $rowsRaw = DB::table('jobs')
-                ->selectRaw("
-                    COALESCE(NULLIF(queue, ''), 'default') as queue,
-                    COUNT(*) as pending,
-                    AVG(GREATEST(UNIX_TIMESTAMP() - COALESCE(available_at, created_at), 0)) as avg_wait_seconds,
-                    MAX(attempts) as max_attempts,
-                    SUM(CASE WHEN attempts > 1 THEN 1 ELSE 0 END) as retrying
-                ")
-                ->groupBy(DB::raw("COALESCE(NULLIF(queue, ''), 'default')"))
+            $nowTs = now()->timestamp;
+
+            $aggregates = DB::table('jobs')
+                ->select([
+                    'queue',
+                    DB::raw('COUNT(*) as pending'),
+                    DB::raw("AVG(GREATEST({$nowTs} - available_at, 0)) as avg_wait_seconds"),
+                    DB::raw('MAX(attempts) as max_attempts'),
+                    DB::raw('SUM(CASE WHEN attempts > 1 THEN 1 ELSE 0 END) as retrying'),
+                ])
+                ->groupBy('queue')
+                ->orderBy('queue')
                 ->get();
 
-            foreach ($rowsRaw as $row) {
-                $queue = (string) ($row->queue ?? 'default');
+            foreach ($aggregates as $agg) {
+                $queueRaw = trim((string) ($agg->queue ?? ''));
                 $rows[] = [
-                    'queue' => $queue,
-                    'pending' => (int) ($row->pending ?? 0),
-                    'avg_wait_seconds' => round((float) ($row->avg_wait_seconds ?? 0), 2),
-                    'max_attempts' => (int) ($row->max_attempts ?? 0),
-                    'retrying' => (int) ($row->retrying ?? 0),
+                    'queue' => $queueRaw !== '' ? $queueRaw : 'default',
+                    'pending' => (int) $agg->pending,
+                    'avg_wait_seconds' => round((float) $agg->avg_wait_seconds, 2),
+                    'max_attempts' => (int) $agg->max_attempts,
+                    'retrying' => (int) $agg->retrying,
                 ];
             }
         }
@@ -553,11 +573,12 @@ class MonitoringAdminController extends Controller
      */
     private function queueProgramMap(): array
     {
-        return [
-            'imports' => 'grade-imports:*',
-            'normalize' => 'grade-normalize:*',
-            'extras' => 'grade-extras:*',
-        ];
+        $queues = (array) config('monitoring.queues', []);
+        $map = [];
+        foreach ($queues as $queue => $meta) {
+            $map[$queue] = (string) ($meta['program'] ?? '');
+        }
+        return $map;
     }
 
     /**
@@ -599,10 +620,10 @@ class MonitoringAdminController extends Controller
         $pendingByQueue = [];
         if (Schema::hasTable('jobs')) {
             $pendingByQueue = DB::table('jobs')
-                ->select('queue')
-                ->get()
-                ->groupBy(fn ($row) => trim((string) ($row->queue ?? '')) !== '' ? (string) $row->queue : 'default')
-                ->map(fn ($rows) => $rows->count())
+                ->select('queue', DB::raw('COUNT(*) as total'))
+                ->groupBy('queue')
+                ->pluck('total', 'queue')
+                ->map(fn ($v) => (int) $v)
                 ->all();
         }
 
@@ -611,18 +632,18 @@ class MonitoringAdminController extends Controller
         if (Schema::hasTable('failed_jobs')) {
             $failedByQueue24h = DB::table('failed_jobs')
                 ->where('failed_at', '>=', now()->subDay())
-                ->select('queue')
-                ->get()
-                ->groupBy(fn ($row) => trim((string) ($row->queue ?? '')) !== '' ? (string) $row->queue : 'default')
-                ->map(fn ($rows) => $rows->count())
+                ->select('queue', DB::raw('COUNT(*) as total'))
+                ->groupBy('queue')
+                ->pluck('total', 'queue')
+                ->map(fn ($v) => (int) $v)
                 ->all();
 
             $failedByQueue15m = DB::table('failed_jobs')
                 ->where('failed_at', '>=', now()->subMinutes(15))
-                ->select('queue')
-                ->get()
-                ->groupBy(fn ($row) => trim((string) ($row->queue ?? '')) !== '' ? (string) $row->queue : 'default')
-                ->map(fn ($rows) => $rows->count())
+                ->select('queue', DB::raw('COUNT(*) as total'))
+                ->groupBy('queue')
+                ->pluck('total', 'queue')
+                ->map(fn ($v) => (int) $v)
                 ->all();
         }
         $queueThroughput = $this->queueThroughput($pendingByQueue, $failedByQueue15m);
@@ -923,8 +944,9 @@ class MonitoringAdminController extends Controller
         $user = $request->user();
         abort_unless($user && $user->isSuperAdmin(), 403, 'Apenas superadmin pode recuperar filas.');
 
+        $allowedQueues = implode(',', array_keys((array) config('monitoring.queues', [])));
         $data = $request->validate([
-            'queue' => ['required', 'string', 'in:imports,normalize,extras'],
+            'queue' => ['required', 'string', "in:{$allowedQueues}"],
             'confirmation_text' => ['required', 'string', 'max:80'],
         ]);
 
