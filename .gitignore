@@ -27,3 +27,4 @@ security/
 storage/app/private/
 *.csv
 tmp/deploy/
+build.tar.gz
