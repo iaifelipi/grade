@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'PIXIP')</title>
+    <title>@yield('title', 'Grade')</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,14 +14,14 @@
 </head>
 
 <body
-    class="pixip-body"
+    class="grade-body"
     data-auth-user-id="{{ auth()->id() ?? 'guest' }}"
     data-theme-pref="{{ auth()->check() ? (auth()->user()->theme ?? 'system') : 'system' }}"
     data-config-rail-available="{{ (request()->routeIs('home') || request()->routeIs('guest.explore.*') || request()->routeIs('admin.audit.*') || request()->routeIs('admin.reports.*') || request()->routeIs('admin.monitoring.*') || request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*') || request()->routeIs('admin.plans.*') || request()->routeIs('admin.semantic.*') || request()->routeIs('vault.sources.*') || request()->routeIs('vault.semantic.*') || request()->routeIs('vault.automation.*')) ? '1' : '0' }}"
 >
 
-<div class="pixip-layout">
-    <main class="pixip-main">
+<div class="grade-layout">
+    <main class="grade-main">
         @php
             $showTenantTargetBadge = false;
             $tenantTargetLabel = '';
@@ -37,12 +37,12 @@
                 }
             }
         @endphp
-        <header class="pixip-topbar @hasSection('topbar-tools') has-tools @endif">
-            <div class="pixip-topbar-left"></div>
+        <header class="grade-topbar @hasSection('topbar-tools') has-tools @endif">
+            <div class="grade-topbar-left"></div>
 
-            <div class="pixip-user-menu">
+            <div class="grade-user-menu">
                 @if($showTenantTargetBadge)
-                    <span class="pixip-tenant-target-badge" title="Tenant UUID: {{ $activeTenantUuid }}">
+                    <span class="grade-tenant-target-badge" title="Tenant UUID: {{ $activeTenantUuid }}">
                         Tenant alvo: {{ $tenantTargetLabel }}
                     </span>
                 @endif
@@ -56,47 +56,47 @@
                             ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
                             ->implode('');
                     @endphp
-                    <button class="pixip-user-btn" type="button" data-user-toggle aria-expanded="false">
-                        <span class="pixip-user-avatar" title="{{ $userDisplayName }}">{{ $userInitials ?: 'U' }}</span>
+                    <button class="grade-user-btn" type="button" data-user-toggle aria-expanded="false">
+                        <span class="grade-user-avatar" title="{{ $userDisplayName }}">{{ $userInitials ?: 'U' }}</span>
                     </button>
-                    <div class="pixip-user-dropdown" data-user-menu>
-                    <div class="pixip-user-brand">PIXIP</div>
-                    <div class="pixip-user-divider"></div>
+                    <div class="grade-user-dropdown" data-user-menu>
+                    <div class="grade-user-brand">Grade</div>
+                    <div class="grade-user-divider"></div>
 
-                    <div class="pixip-user-flyout-wrap">
-                        <button type="button" class="pixip-user-item pixip-user-item-summary">
+                    <div class="grade-user-flyout-wrap">
+                        <button type="button" class="grade-user-item grade-user-item-summary">
                         <i class="bi bi-person-circle"></i>{{ auth()->user()->name ?? 'Conta' }}
-                            <i class="bi bi-chevron-right pixip-user-item-arrow" aria-hidden="true"></i>
+                            <i class="bi bi-chevron-right grade-user-item-arrow" aria-hidden="true"></i>
                         </button>
-                        <div class="pixip-user-flyout">
-                            <a href="{{ route('vault.sources.index') }}" class="pixip-user-item">
+                        <div class="grade-user-flyout">
+                            <a href="{{ route('vault.sources.index') }}" class="grade-user-item">
                                 <i class="bi bi-gift"></i>
                                 Faça um teste grátis
                             </a>
-                            <a href="{{ route('profile.edit') }}" class="pixip-user-item">
+                            <a href="{{ route('profile.edit') }}" class="grade-user-item">
                                 <i class="bi bi-person"></i>
                                 Seu perfil
                             </a>
-                            <a href="{{ route('profile.edit') }}#profile-preferences" class="pixip-user-item">
+                            <a href="{{ route('profile.edit') }}#profile-preferences" class="grade-user-item">
                                 <i class="bi bi-credit-card"></i>
                                 Configurações e cobrança
                             </a>
-                            <a href="{{ route('profile.edit') }}" class="pixip-user-item">
+                            <a href="{{ route('profile.edit') }}" class="grade-user-item">
                                 <i class="bi bi-megaphone"></i>
                                 Indique um amigo
                             </a>
 
                             @if(auth()->check() && auth()->user()->isSuperAdmin())
-                                <div class="pixip-user-admin-list">
-                                    <div class="pixip-user-subtitle">Admin</div>
-                                    <a href="{{ route('admin.users.index') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-people"></i>Usuários</a>
-                                    <a href="{{ route('admin.roles.index') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-key"></i>Roles & Permissões</a>
-                                    <a href="{{ route('admin.plans.index') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-box-seam"></i>Planos</a>
-                                    <a href="{{ route('admin.semantic.index') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-diagram-3"></i>Semântica</a>
+                                <div class="grade-user-admin-list">
+                                    <div class="grade-user-subtitle">Admin</div>
+                                    <a href="{{ route('admin.users.index') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-people"></i>Usuários</a>
+                                    <a href="{{ route('admin.roles.index') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-key"></i>Roles & Permissões</a>
+                                    <a href="{{ route('admin.plans.index') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-box-seam"></i>Planos</a>
+                                    <a href="{{ route('admin.semantic.index') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-diagram-3"></i>Semântica</a>
                                     @if(request()->routeIs('home') || request()->routeIs('guest.explore.*'))
                                         <button
                                             type="button"
-                                            class="pixip-user-item pixip-user-item-sub"
+                                            class="grade-user-item grade-user-item-sub"
                                             id="openColumnsAdminModalBtn"
                                             data-columns-admin-modal="1"
                                             data-modal-url="{{ route('explore.columns.modal') }}"
@@ -104,12 +104,12 @@
                                             <i class="bi bi-columns-gap"></i>Colunas
                                         </button>
                                     @else
-                                        <a href="{{ route('explore.columns.index') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-columns-gap"></i>Colunas</a>
+                                        <a href="{{ route('explore.columns.index') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-columns-gap"></i>Colunas</a>
                                     @endif
                                     @if(request()->routeIs('explore.columns.*'))
                                         <button
                                             type="button"
-                                            class="pixip-user-item pixip-user-item-sub"
+                                            class="grade-user-item grade-user-item-sub"
                                             id="adminColumnsDataQualityBtn"
                                             data-data-quality-modal="1"
                                             data-modal-url="{{ route('explore.dataQuality.modal') }}"
@@ -117,129 +117,129 @@
                                             <i class="bi bi-sliders"></i>Dados
                                         </button>
                                     @else
-                                        <a href="{{ route('explore.dataQuality.index') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-sliders"></i>Dados</a>
+                                        <a href="{{ route('explore.dataQuality.index') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-sliders"></i>Dados</a>
                                     @endif
-                                    <a href="{{ route('admin.reports.index') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-bug"></i>Reports</a>
-                                    <a href="{{ route('admin.monitoring.index') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-cpu"></i>Monitoramento</a>
+                                    <a href="{{ route('admin.reports.index') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-bug"></i>Reports</a>
+                                    <a href="{{ route('admin.monitoring.index') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-cpu"></i>Monitoramento</a>
                                     @if(auth()->user()->hasPermission('audit.view_sensitive'))
-                                        <a href="{{ route('admin.audit.access') }}" class="pixip-user-item pixip-user-item-sub"><i class="bi bi-shield-lock"></i>Auditoria</a>
+                                        <a href="{{ route('admin.audit.access') }}" class="grade-user-item grade-user-item-sub"><i class="bi bi-shield-lock"></i>Auditoria</a>
                                     @endif
                                 </div>
                             @endif
                         </div>
                     </div>
 
-                    <a href="{{ route('dashboard') }}" class="pixip-user-item">
+                    <a href="{{ route('dashboard') }}" class="grade-user-item">
                         <i class="bi bi-speedometer2"></i>
                         Dashboard
                     </a>
-                    <a href="{{ route('home') }}" class="pixip-user-item">
+                    <a href="{{ route('home') }}" class="grade-user-item">
                         <i class="bi bi-house-door"></i>
                         Início
                     </a>
-                    <button type="button" class="pixip-user-item" data-user-action="help"><i class="bi bi-question-circle"></i>Central de Ajuda</button>
-                    <button type="button" class="pixip-user-item" data-user-action="news"><i class="bi bi-stars"></i>Novidades</button>
+                    <button type="button" class="grade-user-item" data-user-action="help"><i class="bi bi-question-circle"></i>Central de Ajuda</button>
+                    <button type="button" class="grade-user-item" data-user-action="news"><i class="bi bi-stars"></i>Novidades</button>
 
-                    <div class="pixip-user-divider"></div>
-                    <div class="pixip-user-row">
-                        <span class="pixip-user-row-label"><i class="bi bi-moon-stars"></i>Tema escuro</span>
-                        <button type="button" class="pixip-user-switch" id="userThemeToggle" aria-pressed="false">
-                            <span class="pixip-user-switch-knob" aria-hidden="true"></span>
+                    <div class="grade-user-divider"></div>
+                    <div class="grade-user-row">
+                        <span class="grade-user-row-label"><i class="bi bi-moon-stars"></i>Tema escuro</span>
+                        <button type="button" class="grade-user-switch" id="userThemeToggle" aria-pressed="false">
+                            <span class="grade-user-switch-knob" aria-hidden="true"></span>
                         </button>
                     </div>
-                    <div class="pixip-user-row">
-                        <span class="pixip-user-row-label"><i class="bi bi-sliders2"></i>Painel de controle</span>
-                        <button type="button" class="pixip-user-switch" id="userConfigPanelToggle" aria-pressed="false">
-                            <span class="pixip-user-switch-knob" aria-hidden="true"></span>
+                    <div class="grade-user-row">
+                        <span class="grade-user-row-label"><i class="bi bi-sliders2"></i>Painel de controle</span>
+                        <button type="button" class="grade-user-switch" id="userConfigPanelToggle" aria-pressed="false">
+                            <span class="grade-user-switch-knob" aria-hidden="true"></span>
                         </button>
                     </div>
-                    <div class="pixip-user-row">
-                        <label class="pixip-user-row-label" for="userLanguageSelect">Idioma</label>
-                        <select id="userLanguageSelect" class="pixip-user-select">
+                    <div class="grade-user-row">
+                        <label class="grade-user-row-label" for="userLanguageSelect">Idioma</label>
+                        <select id="userLanguageSelect" class="grade-user-select">
                             <option value="pt-BR">Português (BR)</option>
                             <option value="en-US">English</option>
                             <option value="es-ES">Español</option>
                         </select>
                     </div>
-                    <button type="button" class="pixip-user-item" data-user-action="shortcuts"><i class="bi bi-keyboard"></i>Atalhos do teclado</button>
-                    <button type="button" class="pixip-user-item" data-bs-toggle="modal" data-bs-target="#bugReportModal">
+                    <button type="button" class="grade-user-item" data-user-action="shortcuts"><i class="bi bi-keyboard"></i>Atalhos do teclado</button>
+                    <button type="button" class="grade-user-item" data-bs-toggle="modal" data-bs-target="#bugReportModal">
                         <i class="bi bi-bug"></i>
                         Reportar um problema
                     </button>
-                    <button type="button" class="pixip-user-item" data-user-action="desktop"><i class="bi bi-laptop"></i>Obter o app para Desktop</button>
+                    <button type="button" class="grade-user-item" data-user-action="desktop"><i class="bi bi-laptop"></i>Obter o app para Desktop</button>
 
-                    <div class="pixip-user-divider"></div>
+                    <div class="grade-user-divider"></div>
                     @if(auth()->check() && auth()->user()->isSuperAdmin() && isset($impersonated_user) && $impersonated_user)
                         <form method="POST" action="{{ route('admin.impersonate.stop') }}">
                             @csrf
-                        <button class="pixip-user-item" type="submit"><i class="bi bi-person-x"></i>Encerrar impersonação</button>
+                        <button class="grade-user-item" type="submit"><i class="bi bi-person-x"></i>Encerrar impersonação</button>
                     </form>
                     @endif
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button class="pixip-user-item text-danger" type="submit"><i class="bi bi-box-arrow-right"></i>Sair</button>
+                        <button class="grade-user-item text-danger" type="submit"><i class="bi bi-box-arrow-right"></i>Sair</button>
                     </form>
                 </div>
                 @endauth
 
                 @guest
-                    <button class="pixip-user-btn pixip-user-btn--guest" type="button" data-user-toggle aria-expanded="false">
-                        <span class="pixip-user-avatar pixip-user-avatar--guest" title="Menu">
+                    <button class="grade-user-btn grade-user-btn--guest" type="button" data-user-toggle aria-expanded="false">
+                        <span class="grade-user-avatar grade-user-avatar--guest" title="Menu">
                             <i class="bi bi-list"></i>
                         </span>
                     </button>
-                    <div class="pixip-user-dropdown" data-user-menu>
-                        <div class="pixip-user-brand">PIXIP</div>
-                        <div class="pixip-user-divider"></div>
-                        <a href="{{ route('home') }}" class="pixip-user-item">
+                    <div class="grade-user-dropdown" data-user-menu>
+                        <div class="grade-user-brand">Grade</div>
+                        <div class="grade-user-divider"></div>
+                        <a href="{{ route('home') }}" class="grade-user-item">
                             <i class="bi bi-house-door"></i>
                             Home
                         </a>
-                        <button type="button" class="pixip-user-item" data-user-action="help">
+                        <button type="button" class="grade-user-item" data-user-action="help">
                             <i class="bi bi-question-circle"></i>
                             Central de Ajuda
                         </button>
-                        <button type="button" class="pixip-user-item" data-user-action="news">
+                        <button type="button" class="grade-user-item" data-user-action="news">
                             <i class="bi bi-stars"></i>
                             Novidades
                         </button>
 
-                        <div class="pixip-user-divider"></div>
-                        <div class="pixip-user-row">
-                            <span class="pixip-user-row-label"><i class="bi bi-moon-stars"></i>Tema escuro</span>
-                            <button type="button" class="pixip-user-switch" id="userThemeToggle" aria-pressed="false">
-                                <span class="pixip-user-switch-knob" aria-hidden="true"></span>
+                        <div class="grade-user-divider"></div>
+                        <div class="grade-user-row">
+                            <span class="grade-user-row-label"><i class="bi bi-moon-stars"></i>Tema escuro</span>
+                            <button type="button" class="grade-user-switch" id="userThemeToggle" aria-pressed="false">
+                                <span class="grade-user-switch-knob" aria-hidden="true"></span>
                             </button>
                         </div>
-                        <div class="pixip-user-row">
-                            <span class="pixip-user-row-label"><i class="bi bi-sliders2"></i>Painel de controle</span>
-                            <button type="button" class="pixip-user-switch" id="userConfigPanelToggle" aria-pressed="false">
-                                <span class="pixip-user-switch-knob" aria-hidden="true"></span>
+                        <div class="grade-user-row">
+                            <span class="grade-user-row-label"><i class="bi bi-sliders2"></i>Painel de controle</span>
+                            <button type="button" class="grade-user-switch" id="userConfigPanelToggle" aria-pressed="false">
+                                <span class="grade-user-switch-knob" aria-hidden="true"></span>
                             </button>
                         </div>
-                        <div class="pixip-user-row">
-                            <label class="pixip-user-row-label" for="userLanguageSelect">Idioma</label>
-                            <select id="userLanguageSelect" class="pixip-user-select">
+                        <div class="grade-user-row">
+                            <label class="grade-user-row-label" for="userLanguageSelect">Idioma</label>
+                            <select id="userLanguageSelect" class="grade-user-select">
                                 <option value="pt-BR">Português (BR)</option>
                                 <option value="en-US">English</option>
                                 <option value="es-ES">Español</option>
                             </select>
                         </div>
-                        <button type="button" class="pixip-user-item" data-user-action="shortcuts">
+                        <button type="button" class="grade-user-item" data-user-action="shortcuts">
                             <i class="bi bi-keyboard"></i>
                             Atalhos do teclado
                         </button>
-                        <button type="button" class="pixip-user-item" data-bs-toggle="modal" data-bs-target="#bugReportModal">
+                        <button type="button" class="grade-user-item" data-bs-toggle="modal" data-bs-target="#bugReportModal">
                             <i class="bi bi-bug"></i>
                             Reportar um problema
                         </button>
-                        <button type="button" class="pixip-user-item" data-user-action="desktop">
+                        <button type="button" class="grade-user-item" data-user-action="desktop">
                             <i class="bi bi-laptop"></i>
                             Obter o app para Desktop
                         </button>
 
-                        <div class="pixip-user-divider"></div>
-                        <button type="button" class="pixip-user-item" data-bs-toggle="modal" data-bs-target="#authLoginModal">
+                        <div class="grade-user-divider"></div>
+                        <button type="button" class="grade-user-item" data-bs-toggle="modal" data-bs-target="#authLoginModal">
                             <i class="bi bi-box-arrow-in-right"></i>
                             Entrar
                         </button>
@@ -248,17 +248,17 @@
             </div>
 
             @hasSection('topbar-tools')
-                <div class="pixip-topbar-tools">
+                <div class="grade-topbar-tools">
                     @yield('topbar-tools')
                 </div>
             @endif
 
             @if(auth()->check() && auth()->user()->isSuperAdmin() && isset($impersonated_user) && $impersonated_user)
-                <div class="pixip-impersonation-badge">
+                <div class="grade-impersonation-badge">
                     <span>Impersonando: {{ $impersonated_user->name }}</span>
                     <form method="POST" action="{{ route('admin.impersonate.stop') }}">
                         @csrf
-                        <button type="submit" class="pixip-impersonation-stop">Encerrar</button>
+                        <button type="submit" class="grade-impersonation-stop">Encerrar</button>
                     </form>
                 </div>
             @endif
@@ -266,52 +266,52 @@
         </header>
 
         @if(request()->routeIs('home') || request()->routeIs('guest.explore.*') || request()->routeIs('admin.audit.*') || request()->routeIs('admin.reports.*') || request()->routeIs('admin.monitoring.*') || request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*') || request()->routeIs('admin.plans.*') || request()->routeIs('admin.semantic.*') || request()->routeIs('vault.sources.*') || request()->routeIs('vault.semantic.*') || request()->routeIs('vault.automation.*'))
-            <aside class="pixip-config-rail" id="pixipConfigRail" aria-label="Painel de controle">
-                <div class="pixip-config-rail-actions">
+            <aside class="grade-config-rail" id="gradeConfigRail" aria-label="Painel de controle">
+                <div class="grade-config-rail-actions">
                     @if(request()->routeIs('admin.audit.*') || request()->routeIs('admin.reports.*') || request()->routeIs('admin.monitoring.*') || request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*') || request()->routeIs('admin.plans.*') || request()->routeIs('admin.semantic.*'))
                         @if(auth()->check() && auth()->user()->hasPermission('automation.run'))
-                            <a href="{{ route('vault.automation.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('vault.automation.*') ? 'is-active' : '' }}" title="Operações">
+                            <a href="{{ route('vault.automation.index') }}" class="grade-config-rail-btn {{ request()->routeIs('vault.automation.*') ? 'is-active' : '' }}" title="Operações">
                                 <i class="bi bi-lightning-charge"></i>
                                 <span>Operações</span>
                             </a>
                         @else
-                            <button type="button" class="pixip-config-rail-btn" title="Operações indisponível" disabled aria-disabled="true">
+                            <button type="button" class="grade-config-rail-btn" title="Operações indisponível" disabled aria-disabled="true">
                                 <i class="bi bi-lightning-charge"></i>
                                 <span>Operações</span>
                             </button>
                         @endif
                         @if(auth()->check() && auth()->user()->hasPermission('users.manage'))
-                            <a href="{{ route('admin.users.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}" title="Usuários">
+                            <a href="{{ route('admin.users.index') }}" class="grade-config-rail-btn {{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}" title="Usuários">
                                 <i class="bi bi-people"></i>
                                 <span>Usuários</span>
                             </a>
-                            <a href="{{ route('admin.plans.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('admin.plans.*') ? 'is-active' : '' }}" title="Planos">
+                            <a href="{{ route('admin.plans.index') }}" class="grade-config-rail-btn {{ request()->routeIs('admin.plans.*') ? 'is-active' : '' }}" title="Planos">
                                 <i class="bi bi-box-seam"></i>
                                 <span>Planos</span>
                             </a>
                         @endif
                         @if(auth()->check() && auth()->user()->hasPermission('roles.manage'))
-                            <a href="{{ route('admin.roles.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('admin.roles.*') ? 'is-active' : '' }}" title="Roles">
+                            <a href="{{ route('admin.roles.index') }}" class="grade-config-rail-btn {{ request()->routeIs('admin.roles.*') ? 'is-active' : '' }}" title="Roles">
                                 <i class="bi bi-key"></i>
                                 <span>Roles</span>
                             </a>
                         @endif
                         @if(auth()->check() && auth()->user()->hasPermission('system.settings'))
-                            <a href="{{ route('admin.semantic.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('admin.semantic.*') ? 'is-active' : '' }}" title="Semântica">
+                            <a href="{{ route('admin.semantic.index') }}" class="grade-config-rail-btn {{ request()->routeIs('admin.semantic.*') ? 'is-active' : '' }}" title="Semântica">
                                 <i class="bi bi-diagram-3"></i>
                                 <span>Semântica</span>
                             </a>
-                            <a href="{{ route('admin.reports.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('admin.reports.*') ? 'is-active' : '' }}" title="Reports">
+                            <a href="{{ route('admin.reports.index') }}" class="grade-config-rail-btn {{ request()->routeIs('admin.reports.*') ? 'is-active' : '' }}" title="Reports">
                                 <i class="bi bi-bug"></i>
                                 <span>Reports</span>
                             </a>
-                            <a href="{{ route('admin.monitoring.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('admin.monitoring.*') ? 'is-active' : '' }}" title="Monitoramento">
+                            <a href="{{ route('admin.monitoring.index') }}" class="grade-config-rail-btn {{ request()->routeIs('admin.monitoring.*') ? 'is-active' : '' }}" title="Monitoramento">
                                 <i class="bi bi-cpu"></i>
                                 <span>Monitoramento</span>
                             </a>
                         @endif
                         @if(auth()->check() && auth()->user()->hasPermission('audit.view_sensitive'))
-                            <a href="{{ route('admin.audit.access') }}" class="pixip-config-rail-btn {{ request()->routeIs('admin.audit.*') ? 'is-active' : '' }}" title="Auditoria">
+                            <a href="{{ route('admin.audit.access') }}" class="grade-config-rail-btn {{ request()->routeIs('admin.audit.*') ? 'is-active' : '' }}" title="Auditoria">
                                 <i class="bi bi-shield-lock"></i>
                                 <span>Auditoria</span>
                             </a>
@@ -323,86 +323,86 @@
                                 || request()->routeIs('vault.automation.*');
                         @endphp
                         @if($isVaultUtilityRoute)
-                            <button type="button" class="pixip-config-rail-btn" title="Busca indisponível nesta tela" disabled aria-disabled="true">
+                            <button type="button" class="grade-config-rail-btn" title="Busca indisponível nesta tela" disabled aria-disabled="true">
                                 <i class="bi bi-search"></i>
                                 <span>Busca</span>
                             </button>
-                            <button type="button" class="pixip-config-rail-btn" title="Limpar indisponível nesta tela" disabled aria-disabled="true">
+                            <button type="button" class="grade-config-rail-btn" title="Limpar indisponível nesta tela" disabled aria-disabled="true">
                                 <i class="bi bi-eraser"></i>
                                 <span>Limpar</span>
                             </button>
-                            <div class="pixip-config-rail-separator" aria-hidden="true"></div>
-                            <button type="button" class="pixip-config-rail-btn" title="Colunas indisponível nesta tela" disabled aria-disabled="true">
+                            <div class="grade-config-rail-separator" aria-hidden="true"></div>
+                            <button type="button" class="grade-config-rail-btn" title="Colunas indisponível nesta tela" disabled aria-disabled="true">
                                 <i class="bi bi-columns-gap"></i>
                                 <span>Colunas</span>
                             </button>
-                            <button type="button" class="pixip-config-rail-btn" title="Dados indisponível nesta tela" disabled aria-disabled="true">
+                            <button type="button" class="grade-config-rail-btn" title="Dados indisponível nesta tela" disabled aria-disabled="true">
                                 <i class="bi bi-database"></i>
                                 <span>Dados</span>
                             </button>
-                            <button type="button" class="pixip-config-rail-btn" title="Semântica indisponível nesta tela" disabled aria-disabled="true">
+                            <button type="button" class="grade-config-rail-btn" title="Semântica indisponível nesta tela" disabled aria-disabled="true">
                                 <i class="bi bi-diagram-3"></i>
                                 <span>Semântica</span>
                             </button>
-                            <button type="button" class="pixip-config-rail-btn" title="Publicar indisponível nesta tela" disabled aria-disabled="true">
+                            <button type="button" class="grade-config-rail-btn" title="Publicar indisponível nesta tela" disabled aria-disabled="true">
                                 <i class="bi bi-save"></i>
                                 <span>Publicar</span>
                             </button>
-                            <div class="pixip-config-rail-separator" aria-hidden="true"></div>
+                            <div class="grade-config-rail-separator" aria-hidden="true"></div>
                             @if(auth()->check() && auth()->user()->hasPermission('automation.run'))
-                                <a href="{{ route('vault.automation.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('vault.automation.*') ? 'is-active' : '' }}" title="Operações">
+                                <a href="{{ route('vault.automation.index') }}" class="grade-config-rail-btn {{ request()->routeIs('vault.automation.*') ? 'is-active' : '' }}" title="Operações">
                                     <i class="bi bi-lightning-charge"></i>
                                     <span>Operações</span>
                                 </a>
                             @else
-                                <button type="button" class="pixip-config-rail-btn" title="Operações indisponível" disabled aria-disabled="true">
+                                <button type="button" class="grade-config-rail-btn" title="Operações indisponível" disabled aria-disabled="true">
                                     <i class="bi bi-lightning-charge"></i>
                                     <span>Operações</span>
                                 </button>
                             @endif
-                            <button type="button" class="pixip-config-rail-btn" title="Exportar indisponível nesta tela" disabled aria-disabled="true">
+                            <button type="button" class="grade-config-rail-btn" title="Exportar indisponível nesta tela" disabled aria-disabled="true">
                                 <i class="bi bi-download"></i>
                                 <span>Exportar</span>
                             </button>
                         @else
-                            <button type="button" class="pixip-config-rail-btn" data-config-rail-action="search" title="Busca">
+                            <button type="button" class="grade-config-rail-btn" data-config-rail-action="search" title="Busca">
                                 <i class="bi bi-search"></i>
                                 <span>Busca</span>
                             </button>
-                            <button type="button" class="pixip-config-rail-btn" data-config-rail-action="clear" title="Limpar filtros">
+                            <button type="button" class="grade-config-rail-btn" data-config-rail-action="clear" title="Limpar filtros">
                                 <i class="bi bi-eraser"></i>
                                 <span>Limpar</span>
                             </button>
-                            <div class="pixip-config-rail-separator" aria-hidden="true"></div>
-                            <button type="button" class="pixip-config-rail-btn" data-config-rail-action="columns" title="Colunas">
+                            <div class="grade-config-rail-separator" aria-hidden="true"></div>
+                            <button type="button" class="grade-config-rail-btn" data-config-rail-action="columns" title="Colunas">
                                 <i class="bi bi-columns-gap"></i>
                                 <span>Colunas</span>
                             </button>
-                            <button type="button" class="pixip-config-rail-btn" data-config-rail-action="data" title="Dados">
+                            <button type="button" class="grade-config-rail-btn" data-config-rail-action="data" title="Dados">
                                 <i class="bi bi-database"></i>
                                 <span>Dados</span>
                             </button>
-                            <button type="button" class="pixip-config-rail-btn" data-config-rail-action="semantic" title="Mapa semântico">
+                            <button type="button" class="grade-config-rail-btn" data-config-rail-action="semantic" title="Mapa semântico">
                                 <i class="bi bi-diagram-3"></i>
                                 <span>Semântica</span>
                             </button>
-                            <button type="button" class="pixip-config-rail-btn" data-config-rail-action="save" title="Publicar alterações" id="railSaveBtn">
+                            <button type="button" class="grade-config-rail-btn" data-config-rail-action="save" title="Publicar alterações" id="railSaveBtn">
                                 <i class="bi bi-save"></i>
-                                <span>Publicar <span class="pixip-config-rail-badge d-none" id="railSaveBadge">0</span></span>
+                                <span>Publicar <span class="grade-config-rail-badge d-none" id="railSaveBadge">0</span></span>
                             </button>
-                            <div class="pixip-config-rail-separator" aria-hidden="true"></div>
+                            <div class="grade-config-rail-separator" aria-hidden="true"></div>
                             @if(auth()->check() && auth()->user()->hasPermission('automation.run'))
-                                <a href="{{ route('vault.automation.index') }}" class="pixip-config-rail-btn {{ request()->routeIs('vault.automation.*') ? 'is-active' : '' }}" title="Operações">
+                                <a href="{{ route('vault.automation.index') }}" class="grade-config-rail-btn {{ request()->routeIs('vault.automation.*') ? 'is-active' : '' }}" title="Operações">
                                     <i class="bi bi-lightning-charge"></i>
                                     <span>Operações</span>
                                 </a>
                             @else
-                                <button type="button" class="pixip-config-rail-btn" title="Operações indisponível" disabled aria-disabled="true">
+                                <button type="button" class="grade-config-rail-btn" title="Operações indisponível" disabled aria-disabled="true">
                                     <i class="bi bi-lightning-charge"></i>
                                     <span>Operações</span>
                                 </button>
                             @endif
-                            <button type="button" class="pixip-config-rail-btn" data-config-rail-action="export" title="Exportar">
+                            <button type="button" class="grade-config-rail-btn" data-config-rail-action="export" title="Exportar">
                                 <i class="bi bi-download"></i>
                                 <span>Exportar</span>
                             </button>
@@ -412,7 +412,7 @@
             </aside>
         @endif
 
-        <section class="pixip-content">
+        <section class="grade-content">
             @yield('content')
         </section>
     </main>
@@ -420,19 +420,19 @@
 @guest
     <div class="modal fade" id="authLoginModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow rounded-4 pixip-auth-modal">
+            <div class="modal-content border-0 shadow rounded-4 grade-auth-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title">Entrar</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body pt-2">
-                    <div class="pixip-auth-modal-shell">
-                        <div class="pixip-auth-modal-brand">
-                            <div class="pixip-auth-logo">PX</div>
-                            <div class="pixip-auth-name">PIXIP</div>
-                            <div class="pixip-auth-tagline">Inteligência operacional para times de dados.</div>
+                    <div class="grade-auth-modal-shell">
+                        <div class="grade-auth-modal-brand">
+                            <div class="grade-auth-logo">PX</div>
+                            <div class="grade-auth-name">Grade</div>
+                            <div class="grade-auth-tagline">Inteligência operacional para times de dados.</div>
                         </div>
-                        <div class="pixip-auth-modal-card">
+                        <div class="grade-auth-modal-card">
                             @include('auth.partials.login-form')
                         </div>
                     </div>
@@ -443,19 +443,19 @@
 
     <div class="modal fade" id="authForgotModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow rounded-4 pixip-auth-modal">
+            <div class="modal-content border-0 shadow rounded-4 grade-auth-modal">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title">Recuperar senha</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body pt-2">
-                    <div class="pixip-auth-modal-shell">
-                        <div class="pixip-auth-modal-brand">
-                            <div class="pixip-auth-logo">PX</div>
-                            <div class="pixip-auth-name">PIXIP</div>
-                            <div class="pixip-auth-tagline">Inteligência operacional para times de dados.</div>
+                    <div class="grade-auth-modal-shell">
+                        <div class="grade-auth-modal-brand">
+                            <div class="grade-auth-logo">PX</div>
+                            <div class="grade-auth-name">Grade</div>
+                            <div class="grade-auth-tagline">Inteligência operacional para times de dados.</div>
                         </div>
-                        <div class="pixip-auth-modal-card">
+                        <div class="grade-auth-modal-card">
                             @include('auth.partials.forgot-password-form')
                         </div>
                     </div>

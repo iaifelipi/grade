@@ -24,7 +24,7 @@ class TenantStorage
 
      * ==========================================================
 
-     * PIXIP • TenantStorage (FULL FINAL CANON V5+)
+     * Grade • TenantStorage (FULL FINAL CANON V5+)
 
      *
 

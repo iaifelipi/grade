@@ -554,9 +554,9 @@ class MonitoringAdminController extends Controller
     private function queueProgramMap(): array
     {
         return [
-            'imports' => 'pixip-imports:*',
-            'normalize' => 'pixip-normalize:*',
-            'extras' => 'pixip-extras:*',
+            'imports' => 'grade-imports:*',
+            'normalize' => 'grade-normalize:*',
+            'extras' => 'grade-extras:*',
         ];
     }
 

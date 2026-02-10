@@ -1,7 +1,7 @@
-# Pixip - Migracao Hostinger (Etapa 1)
+# Grade - Migracao Hostinger (Etapa 1)
 
 ## 1) Inventario atual (origem)
-- Projeto: `PIXIP` (Laravel 12.49.0)
+- Projeto: `Grade` (Laravel 12.49.0)
 - PHP CLI: `8.2.30`
 - Composer: `2.9.4`
 - Node/NPM: `22.22.0 / 10.9.4`

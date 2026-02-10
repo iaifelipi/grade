@@ -141,10 +141,10 @@
                     <div class="guest-welcome-content">
                         <div class="guest-welcome-header">
                             <div>
-                                <div class="guest-welcome-kicker">Bem-vindo ao PIXIP</div>
+                                <div class="guest-welcome-kicker">Bem-vindo ao Grade</div>
                                 <h5 class="modal-title">Conecte dados, automatize decisões e dispare ações inteligentes</h5>
                                 <p class="guest-welcome-subtitle">
-                                    O PIXIP é para times que precisam transformar arquivos em inteligência prática:
+                                    O Grade é para times que precisam transformar arquivos em inteligência prática:
                                     semântica, inferência e ações em poucos cliques.
                                 </p>
                             </div>

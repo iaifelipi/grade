@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>@yield('title','PIXIP')</title>
+    <title>@yield('title','Grade')</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,19 +12,19 @@
     @vite(['resources/css/app.css','resources/js/app.js'])
 </head>
 
-<body class="pixip-body pixip-auth-body">
+<body class="grade-body grade-auth-body">
 
-<div class="pixip-auth-shell">
-    <aside class="pixip-auth-aside">
-        <div class="pixip-auth-brand">
-            <div class="pixip-auth-logo">PX</div>
+<div class="grade-auth-shell">
+    <aside class="grade-auth-aside">
+        <div class="grade-auth-brand">
+            <div class="grade-auth-logo">PX</div>
             <div>
-                <div class="pixip-auth-name">PIXIP</div>
-                <div class="pixip-auth-tagline">Inteligência operacional para times de dados.</div>
+                <div class="grade-auth-name">Grade</div>
+                <div class="grade-auth-tagline">Inteligência operacional para times de dados.</div>
             </div>
         </div>
 
-        <div class="pixip-auth-aside-card">
+        <div class="grade-auth-aside-card">
             <h3>O que você ganha aqui</h3>
             <ul>
                 <li>Importação de registros em segundos</li>
@@ -33,7 +33,7 @@
             </ul>
         </div>
 
-        <div class="pixip-auth-metrics">
+        <div class="grade-auth-metrics">
             <div>
                 <span>+2M</span>
                 <small>Registros processados</small>
@@ -45,13 +45,13 @@
         </div>
     </aside>
 
-    <main class="pixip-auth-main">
-        <div class="pixip-auth-card">
-            <div class="pixip-auth-card-body">
+    <main class="grade-auth-main">
+        <div class="grade-auth-card">
+            <div class="grade-auth-card-body">
                 @yield('content')
             </div>
         </div>
-        <div class="pixip-auth-footer">© {{ date('Y') }} PIXIP • Dados protegidos</div>
+        <div class="grade-auth-footer">© {{ date('Y') }} Grade • Dados protegidos</div>
     </main>
 </div>
 

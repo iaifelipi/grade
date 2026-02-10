@@ -1,5 +1,5 @@
 /* =========================================================
- * PIXIP — Top Menu Controller
+ * Grade — Top Menu Controller
  * ========================================================= */
 
 let initialized = false
@@ -16,7 +16,7 @@ export default function initSidebar() {
     const links = menu.querySelectorAll('a')
 
     const isMobile = () => window.innerWidth < 992
-    const storageKey = 'pixip.menu.open'
+    const storageKey = 'grade.menu.open'
 
     function toggle() {
         if (!isMobile()) return

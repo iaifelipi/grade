@@ -66,7 +66,7 @@ class AppServiceProvider extends ServiceProvider
 
         /*
         |--------------------------------------------------------------------------
-        | 🔥 JSON UTF8 GLOBAL (PIXIP padrão)
+        | 🔥 JSON UTF8 GLOBAL (Grade padrão)
         |--------------------------------------------------------------------------
         | Uso:
         |   return response()->jsonUtf8($data);

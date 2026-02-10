@@ -15,7 +15,7 @@ class VaultSemanticController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | TENANT HELPER (PIXIP CANÔNICO)
+    | TENANT HELPER (Grade CANÔNICO)
     |--------------------------------------------------------------------------
     */
 

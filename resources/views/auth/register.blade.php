@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title','Criar conta • PIXIP')
+@section('title','Criar conta • Grade')
 
 @section('content')
 

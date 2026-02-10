@@ -1,8 +1,8 @@
-.pixip-profile {
+.grade-profile {
     max-width: 1200px;
 }
 
-.pixip-profile-hero {
+.grade-profile-hero {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -15,13 +15,13 @@
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
-.pixip-profile-identity {
+.grade-profile-identity {
     display: flex;
     align-items: center;
     gap: 16px;
 }
 
-.pixip-profile-avatar {
+.grade-profile-avatar {
     width: 58px;
     height: 58px;
     border-radius: 18px;
@@ -34,14 +34,14 @@
     letter-spacing: 0.4px;
 }
 
-.pixip-profile-title {
+.grade-profile-title {
     font-size: 20px;
     font-weight: 700;
     margin: 0;
     color: var(--text);
 }
 
-.pixip-profile-sub {
+.grade-profile-sub {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -49,7 +49,7 @@
     font-size: 13px;
 }
 
-.pixip-uuid-chip{
+.grade-uuid-chip{
     padding: 4px 10px;
     border-radius: 999px;
     border: 1px solid rgba(99,102,241,0.25);
@@ -62,51 +62,51 @@
     gap: 6px;
 }
 
-.pixip-uuid-chip:hover{
+.grade-uuid-chip:hover{
     border-color: rgba(99,102,241,0.5);
     background: rgba(99,102,241,0.08);
 }
 
-.pixip-uuid-chip.is-copied{
+.grade-uuid-chip.is-copied{
     border-color: #10b981;
     color: #0f766e;
     background: rgba(16,185,129,0.12);
 }
-.pixip-profile-dot {
+.grade-profile-dot {
     width: 5px;
     height: 5px;
     border-radius: 50%;
     background: rgba(99,102,241,0.35);
 }
 
-.pixip-profile-status {
+.grade-profile-status {
     min-width: 220px;
 }
 
-.pixip-profile-sub{
+.grade-profile-sub{
     gap: 6px;
 }
 
-.pixip-profile-plan{
+.grade-profile-plan{
     margin-top: 6px;
     font-size: 12px;
     color: var(--muted);
 }
 
 
-.pixip-profile-grid {
+.grade-profile-grid {
     display: grid;
     grid-template-columns: 240px minmax(0, 1fr);
     gap: 24px;
 }
 
-.pixip-profile-nav {
+.grade-profile-nav {
     display: flex;
     flex-direction: column;
     gap: 18px;
 }
 
-.pixip-profile-nav-card {
+.grade-profile-nav-card {
     background: var(--surface);
     border-radius: 16px;
     border: 1px solid var(--border);
@@ -116,7 +116,7 @@
     gap: 8px;
 }
 
-.pixip-profile-nav-link {
+.grade-profile-nav-link {
     text-decoration: none;
     color: var(--text);
     font-weight: 600;
@@ -126,12 +126,12 @@
     transition: background .15s ease, color .15s ease;
 }
 
-.pixip-profile-nav-link:hover {
+.grade-profile-nav-link:hover {
     background: var(--surface-2);
     color: var(--text);
 }
 
-.pixip-profile-tip {
+.grade-profile-tip {
     background: var(--text);
     color: #e2e8f0;
     padding: 16px;
@@ -139,18 +139,18 @@
     font-size: 13px;
 }
 
-.pixip-profile-tip-title {
+.grade-profile-tip-title {
     font-weight: 700;
     margin-bottom: 6px;
     color: #fff;
 }
 
-.pixip-profile-content {
+.grade-profile-content {
     display: grid;
     gap: 18px;
 }
 
-.pixip-profile-card {
+.grade-profile-card {
     background: var(--surface);
     border-radius: 18px;
     border: 1px solid var(--border);
@@ -158,44 +158,44 @@
     box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
 }
 
-.pixip-profile-card-header {
+.grade-profile-card-header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     margin-bottom: 16px;
 }
 
-.pixip-profile-card-header h3 {
+.grade-profile-card-header h3 {
     font-size: 16px;
     font-weight: 700;
     margin: 0;
     color: var(--text);
 }
 
-.pixip-profile-card-header span {
+.grade-profile-card-header span {
     font-size: 12px;
     color: var(--muted);
 }
 
-.pixip-profile-form .form-label {
+.grade-profile-form .form-label {
     font-weight: 600;
     font-size: 13px;
     color: var(--muted);
 }
 
-.pixip-profile-actions {
+.grade-profile-actions {
     margin-top: 16px;
     display: flex;
     justify-content: flex-end;
 }
 
-.pixip-theme-toggle {
+.grade-theme-toggle {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
 }
 
-.pixip-theme-option {
+.grade-theme-option {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -211,11 +211,11 @@
     transition: all .15s ease;
 }
 
-.pixip-theme-option input {
+.grade-theme-option input {
     display: none;
 }
 
-.pixip-theme-option span {
+.grade-theme-option span {
     display: block;
     width: 100%;
     text-align: center;
@@ -223,24 +223,24 @@
     border-radius: 10px;
 }
 
-.pixip-theme-option input:checked + span {
+.grade-theme-option input:checked + span {
     background: var(--text);
     color: var(--surface);
     border-color: var(--text);
 }
 
-.pixip-profile-danger {
+.grade-profile-danger {
     border-color: #fecaca;
     background: rgba(239, 68, 68, 0.08);
 }
 
 @media (max-width: 992px) {
-    .pixip-profile-hero {
+    .grade-profile-hero {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .pixip-profile-grid {
+    .grade-profile-grid {
         grid-template-columns: 1fr;
     }
 }

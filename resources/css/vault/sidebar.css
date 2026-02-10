@@ -1,15 +1,15 @@
 /* =====================================================
-   PIXIP SIDEBAR PREMIUM
+   Grade SIDEBAR PREMIUM
 ===================================================== */
 
-.pixip-layout{
+.grade-layout{
     display:flex;
     min-height:100vh;
     background:#f8fafc;
 }
 
 /* SIDEBAR */
-.pixip-sidebar{
+.grade-sidebar{
     width:260px;
     background:#0f172a;
     color:#fff;
@@ -19,21 +19,21 @@
     z-index:1000;
 }
 
-.pixip-sidebar-brand{
+.grade-sidebar-brand{
     font-weight:900;
     font-size:20px;
     padding:20px;
     border-bottom:1px solid rgba(255,255,255,.08);
 }
 
-.pixip-nav{
+.grade-nav{
     display:flex;
     flex-direction:column;
     padding:12px;
     gap:4px;
 }
 
-.pixip-link{
+.grade-link{
     display:flex;
     align-items:center;
     gap:10px;
@@ -45,25 +45,25 @@
     transition:.2s;
 }
 
-.pixip-link:hover{
+.grade-link:hover{
     background:rgba(255,255,255,.06);
     color:#fff;
 }
 
-.pixip-link.is-active{
+.grade-link.is-active{
     background:#2563eb;
     color:#fff;
 }
 
 /* MAIN */
-.pixip-main{
+.grade-main{
     flex:1;
     display:flex;
     flex-direction:column;
 }
 
 /* TOPBAR */
-.pixip-topbar{
+.grade-topbar{
     height:56px;
     background:#fff;
     border-bottom:1px solid #e2e8f0;
@@ -74,29 +74,29 @@
 }
 
 /* CONTENT */
-.pixip-content{
+.grade-content{
     padding:24px;
 }
 
 /* MOBILE */
-.pixip-overlay{
+.grade-overlay{
     display:none;
 }
 
 @media(max-width:992px){
 
-    .pixip-sidebar{
+    .grade-sidebar{
         position:fixed;
         left:-260px;
         top:0;
         bottom:0;
     }
 
-    .pixip-sidebar.is-open{
+    .grade-sidebar.is-open{
         left:0;
     }
 
-    .pixip-overlay{
+    .grade-overlay{
         display:block;
         position:fixed;
         inset:0;
@@ -106,7 +106,7 @@
         transition:.2s;
     }
 
-    .pixip-overlay.is-open{
+    .grade-overlay.is-open{
         opacity:1;
         pointer-events:auto;
     }

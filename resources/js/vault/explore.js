@@ -77,8 +77,8 @@ export default function initExplore(){
     const sourceSelectMobile = $('sourceSelectMobile')
     const dataQualityBtn = $('dataQualityBtn')
     const dataQualityBtnMobile = $('dataQualityBtnMobile')
-    const configRailDataBtn = document.querySelector('#pixipConfigRail [data-config-rail-action="data"]')
-    const configRailSemanticBtn = document.querySelector('#pixipConfigRail [data-config-rail-action="semantic"]')
+    const configRailDataBtn = document.querySelector('#gradeConfigRail [data-config-rail-action="data"]')
+    const configRailSemanticBtn = document.querySelector('#gradeConfigRail [data-config-rail-action="semantic"]')
     const exploreDataQualityModalEl = $('exploreDataQualityModal')
     const exploreDataQualityModalBody = $('exploreDataQualityModalBody')
     const openColumnsAdminModalBtn = $('openColumnsAdminModalBtn')
@@ -1157,7 +1157,7 @@ export default function initExplore(){
        COLUMN RESIZE
     ====================================================== */
 
-    const COL_WIDTHS_KEY = 'pixip_explore_col_widths'
+    const COL_WIDTHS_KEY = 'grade_explore_col_widths'
     let columnWidths = {}
 
     const loadColumnWidths = ()=>{
@@ -3208,7 +3208,7 @@ function initExploreTooltips(){
     if(!window.bootstrap?.Tooltip) return
     const nodes = new Set([
         ...document.querySelectorAll('[data-bs-toggle="tooltip"]'),
-        ...document.querySelectorAll('[data-pixip-tooltip]')
+        ...document.querySelectorAll('[data-grade-tooltip]')
     ])
     nodes.forEach((el)=>{
         bootstrap.Tooltip.getOrCreateInstance(el)
@@ -3235,7 +3235,7 @@ function initGuestWelcomeModals(){
         const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`
         window.history.replaceState({}, '', nextUrl)
     }else{
-        const storageKey = 'pixip_guest_welcome_shown'
+        const storageKey = 'grade_guest_welcome_shown'
         if(!sessionStorage.getItem(storageKey)){
             showModal(welcomeEl)
             sessionStorage.setItem(storageKey, '1')

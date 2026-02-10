@@ -206,7 +206,7 @@
 
 <div class="modal fade" id="semanticTaxonomyModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content pixip-modal-premium">
+        <div class="modal-content grade-modal-premium">
             <div class="modal-header border-0 pb-0">
                 <div>
                     <h5 class="fw-semibold mb-1" id="semanticTaxonomyModalTitle">Novo item</h5>
@@ -241,7 +241,7 @@
 
 <div class="modal fade" id="semanticDeleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content pixip-modal-premium">
+        <div class="modal-content grade-modal-premium">
             <div class="modal-header border-0 pb-0">
                 <div>
                     <h5 class="fw-semibold mb-1">Confirmar exclusão</h5>

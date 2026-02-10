@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Database\Seeders\PlanSeeder;
-use Database\Seeders\PixipPermissionSeeder;
+use Database\Seeders\GradePermissionSeeder;
 use Database\Seeders\SemanticTaxonomySeeder;
 
 class DatabaseSeeder extends Seeder
@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             PlanSeeder::class,
-            PixipPermissionSeeder::class,
+            GradePermissionSeeder::class,
             SemanticTaxonomySeeder::class,
         ]);
     }

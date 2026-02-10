@@ -15,7 +15,7 @@ const state = {
     lastRunCancelNoticeId: null,
 }
 
-const RECORD_FILTER_STORAGE_KEY = `pixip.automation.records.filters.${document.body?.dataset?.authUserId || 'guest'}`
+const RECORD_FILTER_STORAGE_KEY = `grade.automation.records.filters.${document.body?.dataset?.authUserId || 'guest'}`
 let lastBulkDeleteFailedIds = []
 
 function byId(id){

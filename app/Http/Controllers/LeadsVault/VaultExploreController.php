@@ -930,7 +930,7 @@ class VaultExploreController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | 🔥 PIXIP UTF-8 SAFE RESPONSE
+        | 🔥 Grade UTF-8 SAFE RESPONSE
         |--------------------------------------------------------------------------
         */
 

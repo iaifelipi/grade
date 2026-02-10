@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class GuestIdentityService
 {
-    public const COOKIE_NAME = 'pixip_guest_id';
+    public const COOKIE_NAME = 'grade_guest_id';
     private const COOKIE_TTL_MINUTES = 60 * 24 * 365; // 1 ano
 
     private function normalizeUuid(?string $raw): ?string

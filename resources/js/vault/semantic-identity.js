@@ -58,7 +58,7 @@ class SemanticIdentity {
             this.state[type].forEach(item => {
 
                 const pill = document.createElement('span');
-                pill.className = 'pixip-pill';
+                pill.className = 'grade-pill';
                 pill.textContent = item.label;
 
                 pill.onclick = () => {

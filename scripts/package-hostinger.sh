@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${ROOT_DIR}/tmp/deploy"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 SHORT_SHA="$(git -C "${ROOT_DIR}" rev-parse --short HEAD 2>/dev/null || echo 'nogit')"
-PKG_NAME="pixip-hostinger-${STAMP}-${SHORT_SHA}.tar.gz"
+PKG_NAME="grade-hostinger-${STAMP}-${SHORT_SHA}.tar.gz"
 PKG_PATH="${OUT_DIR}/${PKG_NAME}"
 
 WITH_VENDOR="${1:-}"

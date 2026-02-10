@@ -282,7 +282,7 @@ Route::middleware(['auth','tenant','superadmin.readonly'])
 | VAULT (LEADS VAULT)
 |--------------------------------------------------------------------------
 |
-| Arquitetura modular PIXIP
+| Arquitetura modular Grade
 |
 |   /vault/sources      → ingestão/importação
 |   /vault/explore      → consulta rápida

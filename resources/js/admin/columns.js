@@ -1,12 +1,12 @@
 export default function initColumnsAdminPage(options = {}){
     const force = !!options?.force
-    if(window.__pixipColumnsAdminInit && !force){
+    if(window.__gradeColumnsAdminInit && !force){
         if(import.meta?.env?.DEV){
             console.warn('[columns-admin] init called more than once; skipping.')
         }
         return
     }
-    window.__pixipColumnsAdminInit = true
+    window.__gradeColumnsAdminInit = true
     const dataQualityMenuBtn = document.getElementById('adminColumnsDataQualityBtn')
     const dataQualityModalEl = document.getElementById('adminColumnsDataQualityModal')
     const dataQualityModalBody = document.getElementById('adminColumnsDataQualityModalBody')

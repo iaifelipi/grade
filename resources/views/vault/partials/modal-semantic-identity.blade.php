@@ -1,7 +1,7 @@
 <div class="modal fade" id="semanticIdentityModal" tabindex="-1">
 <div class="modal-dialog modal-xl modal-dialog-centered">
 
-<div class="modal-content pixip-card">
+<div class="modal-content grade-card">
 
 <div class="modal-header">
     <h5 class="modal-title">

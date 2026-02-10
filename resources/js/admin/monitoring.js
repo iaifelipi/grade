@@ -4,7 +4,7 @@ const STATUS_CLASS = {
     critical: 'text-bg-danger',
 }
 
-const MONITORING_ALERT_MUTE_KEY = 'pixip_monitoring_alert_muted'
+const MONITORING_ALERT_MUTE_KEY = 'grade_monitoring_alert_muted'
 const ALERT_AUDIO_COOLDOWN_MS = 30000
 
 function badge(label, type = 'secondary'){

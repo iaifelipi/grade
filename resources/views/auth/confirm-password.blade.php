@@ -1,14 +1,14 @@
 @extends('layouts.guest')
 
-@section('title','Confirmar senha • PIXIP')
+@section('title','Confirmar senha • Grade')
 
 @section('content')
-<div class="pixip-auth-header">
-    <div class="pixip-auth-icon">
+<div class="grade-auth-header">
+    <div class="grade-auth-icon">
         <i class="bi bi-lock-fill"></i>
     </div>
-    <div class="pixip-auth-title">Confirmar senha</div>
-    <div class="pixip-auth-subtitle">Área segura, confirme sua senha para continuar</div>
+    <div class="grade-auth-title">Confirmar senha</div>
+    <div class="grade-auth-subtitle">Área segura, confirme sua senha para continuar</div>
 </div>
 
 @if ($errors->any())

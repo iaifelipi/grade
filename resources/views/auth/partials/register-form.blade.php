@@ -1,9 +1,9 @@
-<div class="pixip-auth-header">
-    <div class="pixip-auth-icon">
+<div class="grade-auth-header">
+    <div class="grade-auth-icon">
         <i class="bi bi-person-plus-fill"></i>
     </div>
-    <div class="pixip-auth-title">Crie sua conta</div>
-    <div class="pixip-auth-subtitle">Leva menos de um minuto</div>
+    <div class="grade-auth-title">Crie sua conta</div>
+    <div class="grade-auth-subtitle">Leva menos de um minuto</div>
 </div>
 
 <form method="POST" action="{{ route('register') }}" data-auth-form="register">
@@ -45,7 +45,7 @@
     </button>
 </form>
 
-<div class="pixip-auth-note">
+<div class="grade-auth-note">
     Já tem conta?
-    <button type="button" class="pixip-auth-link btn btn-link p-0 align-baseline" data-auth-switch="login">Entrar</button>
+    <button type="button" class="grade-auth-link btn btn-link p-0 align-baseline" data-auth-switch="login">Entrar</button>
 </div>

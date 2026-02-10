@@ -50,7 +50,7 @@ class LeadIdentity
 
     /**
 
-     * ✅ CANON PIXIP: normaliza para E.164 BR
+     * ✅ CANON Grade: normaliza para E.164 BR
 
      *
 

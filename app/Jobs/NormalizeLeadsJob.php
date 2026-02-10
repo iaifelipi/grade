@@ -39,7 +39,7 @@ class NormalizeLeadsJob implements ShouldQueue
         try {
         /*
         |--------------------------------------------------------------------------
-        | PIXIP NORMALIZE – FAST PATH (1 PASS SQL)
+        | Grade NORMALIZE – FAST PATH (1 PASS SQL)
         |--------------------------------------------------------------------------
         | ✔ Sem JOIN
         | ✔ Sem cache

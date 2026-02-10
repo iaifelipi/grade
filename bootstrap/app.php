@@ -39,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
 
             /*
-            | PIXIP Multi-tenant ⭐
+            | Grade Multi-tenant ⭐
             */
             'tenant' => \App\Http\Middleware\TenantContextMiddleware::class,
 

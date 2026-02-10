@@ -14,7 +14,7 @@ Artisan::command('leads:sweep-orphans {--tenant=} {--dry-run}', function () {
     $tenant = trim((string) ($this->option('tenant') ?? ''));
     $dryRun = (bool) $this->option('dry-run');
 
-    $this->info('PIXIP • Varredura órfã de leads');
+    $this->info('Grade • Varredura órfã de leads');
     $this->line($tenant !== '' ? "Tenant: {$tenant}" : 'Tenant: todos');
     $this->line($dryRun ? 'Modo: DRY-RUN (sem alterações)' : 'Modo: EXECUÇÃO');
 
@@ -131,7 +131,7 @@ Artisan::command('guest:prune-audit {--sessions-days=30} {--events-days=90} {--d
     $eventsDays = max(1, (int) ($this->option('events-days') ?? 90));
     $dryRun = (bool) $this->option('dry-run');
 
-    $this->info('PIXIP • Retenção guest');
+    $this->info('Grade • Retenção guest');
     $this->line("Sessões: {$sessionsDays} dias");
     $this->line("Eventos: {$eventsDays} dias");
     $this->line($dryRun ? 'Modo: DRY-RUN (sem alterações)' : 'Modo: EXECUÇÃO');
@@ -198,7 +198,7 @@ Artisan::command('guest:backfill-storage {--tenant=} {--dry-run}', function () {
     $tenant = trim((string) ($this->option('tenant') ?? ''));
     $dryRun = (bool) $this->option('dry-run');
 
-    $this->info('PIXIP • Backfill de storage guest');
+    $this->info('Grade • Backfill de storage guest');
     $this->line($tenant !== '' ? "Tenant guest alvo: {$tenant}" : 'Tenant guest alvo: automático (guest_sessions)');
     $this->line($dryRun ? 'Modo: DRY-RUN (sem alterações)' : 'Modo: EXECUÇÃO');
 
@@ -429,7 +429,7 @@ Artisan::command('vault:sync-operational {--tenant=} {--source_id=} {--lead_id=*
     /** @var OperationalCatalogSyncService $sync */
     $sync = app(OperationalCatalogSyncService::class);
 
-    $this->info('PIXIP • Sync Cadastro Operacional');
+    $this->info('Grade • Sync Cadastro Operacional');
     $this->line($tenantUuid !== '' ? "Tenant: {$tenantUuid}" : 'Tenant: todos');
     $this->line($sourceId > 0 ? "Source ID: {$sourceId}" : 'Source ID: n/a');
     $this->line($limit > 0 ? "Limit: {$limit}" : 'Limit: sem limite');

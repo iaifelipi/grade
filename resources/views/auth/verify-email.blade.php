@@ -1,14 +1,14 @@
 @extends('layouts.guest')
 
-@section('title','Verificar email • PIXIP')
+@section('title','Verificar email • Grade')
 
 @section('content')
-<div class="pixip-auth-header">
-    <div class="pixip-auth-icon">
+<div class="grade-auth-header">
+    <div class="grade-auth-icon">
         <i class="bi bi-envelope-check-fill"></i>
     </div>
-    <div class="pixip-auth-title">Verifique seu email</div>
-    <div class="pixip-auth-subtitle">Enviamos um link de confirmação para sua caixa de entrada</div>
+    <div class="grade-auth-title">Verifique seu email</div>
+    <div class="grade-auth-subtitle">Enviamos um link de confirmação para sua caixa de entrada</div>
 </div>
 
 @if (session('status') == 'verification-link-sent')
@@ -24,7 +24,7 @@
     </button>
 </form>
 
-<div class="pixip-auth-divider">ou</div>
+<div class="grade-auth-divider">ou</div>
 
 <form method="POST" action="{{ route('logout') }}">
     @csrf

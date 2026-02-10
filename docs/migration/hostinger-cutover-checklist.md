@@ -1,4 +1,4 @@
-# Pixip - Checklist de Cutover Hostinger
+# Grade - Checklist de Cutover Hostinger
 
 ## Pre-deploy
 - [ ] Repositorio atualizado e tag criado (`pre-migracao-hostinger`)
@@ -21,6 +21,7 @@
 
 ## Scheduler e filas
 - [ ] Cron: `* * * * * php /caminho/artisan schedule:run >> /dev/null 2>&1`
+- [ ] Cron de scripts de seguranca/retencao migrado para `grade-*` (ver `docs/migration/cron-grade-script-migration-checklist.md`)
 - [ ] Worker em execução (supervisor/cron fallback)
 - [ ] Validar jobs `imports`, `normalize`, `extras`
 
@@ -42,4 +43,3 @@
 - [ ] Monitorar 24h erros 5xx/queue backlog
 - [ ] Confirmar backups automaticos
 - [ ] Registrar data/hora de virada + responsavel
-

@@ -1,11 +1,11 @@
-.pixip-auth-body {
+.grade-auth-body {
     background: radial-gradient(circle at top, rgba(99, 102, 241, 0.08), transparent 45%),
         radial-gradient(circle at 70% 20%, rgba(59, 130, 246, 0.12), transparent 40%),
         #f7f8fc;
     min-height: 100vh;
 }
 
-.pixip-auth-shell {
+.grade-auth-shell {
     display: grid;
     grid-template-columns: minmax(280px, 420px) minmax(320px, 1fr);
     min-height: 100vh;
@@ -13,7 +13,7 @@
     padding: 40px 6vw;
 }
 
-.pixip-auth-aside {
+.grade-auth-aside {
     background: #0f172a;
     color: #e2e8f0;
     border-radius: 28px;
@@ -23,7 +23,7 @@
     box-shadow: 0 24px 50px rgba(15, 23, 42, 0.35);
 }
 
-.pixip-auth-aside::before {
+.grade-auth-aside::before {
     content: '';
     position: absolute;
     width: 180px;
@@ -34,7 +34,7 @@
     background: rgba(99, 102, 241, 0.35);
 }
 
-.pixip-auth-aside::after {
+.grade-auth-aside::after {
     content: '';
     position: absolute;
     width: 220px;
@@ -45,7 +45,7 @@
     background: rgba(59, 130, 246, 0.25);
 }
 
-.pixip-auth-brand {
+.grade-auth-brand {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -53,7 +53,7 @@
     z-index: 2;
 }
 
-.pixip-auth-logo {
+.grade-auth-logo {
     width: 52px;
     height: 52px;
     border-radius: 16px;
@@ -65,18 +65,18 @@
     font-size: 16px;
 }
 
-.pixip-auth-name {
+.grade-auth-name {
     font-weight: 800;
     font-size: 20px;
     letter-spacing: 0.2px;
 }
 
-.pixip-auth-tagline {
+.grade-auth-tagline {
     font-size: 13px;
     color: #cbd5f5;
 }
 
-.pixip-auth-aside-card {
+.grade-auth-aside-card {
     margin-top: 28px;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 16px;
@@ -85,24 +85,24 @@
     z-index: 2;
 }
 
-.pixip-auth-aside-card h3 {
+.grade-auth-aside-card h3 {
     font-size: 14px;
     font-weight: 700;
     margin-bottom: 12px;
 }
 
-.pixip-auth-aside-card ul {
+.grade-auth-aside-card ul {
     padding-left: 18px;
     margin-bottom: 0;
     font-size: 13px;
     color: #e2e8f0;
 }
 
-.pixip-auth-aside-card li + li {
+.grade-auth-aside-card li + li {
     margin-top: 8px;
 }
 
-.pixip-auth-metrics {
+.grade-auth-metrics {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
@@ -111,31 +111,31 @@
     z-index: 2;
 }
 
-.pixip-auth-metrics div {
+.grade-auth-metrics div {
     background: rgba(15, 23, 42, 0.75);
     border-radius: 14px;
     padding: 12px 14px;
 }
 
-.pixip-auth-metrics span {
+.grade-auth-metrics span {
     display: block;
     font-weight: 700;
     font-size: 16px;
 }
 
-.pixip-auth-metrics small {
+.grade-auth-metrics small {
     font-size: 11px;
     color: #94a3b8;
 }
 
-.pixip-auth-main {
+.grade-auth-main {
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 18px;
 }
 
-.pixip-auth-card {
+.grade-auth-card {
     background: #fff;
     border-radius: 22px;
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
@@ -144,16 +144,16 @@
     padding: 0;
 }
 
-.pixip-auth-card-body {
+.grade-auth-card-body {
     padding: 28px;
 }
 
-.pixip-auth-header {
+.grade-auth-header {
     text-align: center;
     margin-bottom: 22px;
 }
 
-.pixip-auth-icon {
+.grade-auth-icon {
     width: 64px;
     height: 64px;
     border-radius: 20px;
@@ -165,34 +165,34 @@
     margin: 0 auto 16px;
 }
 
-.pixip-auth-title {
+.grade-auth-title {
     font-size: 20px;
     font-weight: 700;
     margin-bottom: 6px;
 }
 
-.pixip-auth-subtitle {
+.grade-auth-subtitle {
     font-size: 13px;
     color: #64748b;
 }
 
-.pixip-auth-footer {
+.grade-auth-footer {
     text-align: center;
     color: #94a3b8;
     font-size: 12px;
 }
 
-.pixip-auth-link {
+.grade-auth-link {
     font-weight: 600;
     color: #4f46e5;
     text-decoration: none;
 }
 
-.pixip-auth-link:hover {
+.grade-auth-link:hover {
     text-decoration: underline;
 }
 
-.pixip-auth-divider {
+.grade-auth-divider {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -201,84 +201,84 @@
     font-size: 12px;
 }
 
-.pixip-auth-divider::before,
-.pixip-auth-divider::after {
+.grade-auth-divider::before,
+.grade-auth-divider::after {
     content: '';
     flex: 1;
     height: 1px;
     background: #e2e8f0;
 }
 
-.pixip-auth-actions {
+.grade-auth-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-top: 12px;
 }
 
-.pixip-auth-actions .form-check-label {
+.grade-auth-actions .form-check-label {
     font-size: 13px;
     color: #64748b;
 }
 
-.pixip-auth-note {
+.grade-auth-note {
     margin-top: 16px;
     text-align: center;
     font-size: 13px;
     color: #64748b;
 }
 
-.pixip-auth-card .form-control,
-.pixip-auth-card .form-select {
+.grade-auth-card .form-control,
+.grade-auth-card .form-select {
     border-radius: 12px;
     padding: 10px 14px;
     border-color: #e2e8f0;
 }
 
-.pixip-auth-card .btn-primary {
+.grade-auth-card .btn-primary {
     border-radius: 12px;
     padding: 10px 16px;
 }
 
-[data-theme="dark"] .pixip-auth-body{
+[data-theme="dark"] .grade-auth-body{
     background: radial-gradient(circle at 20% 0%, rgba(59,130,246,.18), transparent 40%),
                 radial-gradient(circle at 80% 0%, rgba(99,102,241,.18), transparent 40%),
                 #0a0f1f;
     color: #e5e7eb;
 }
 
-[data-theme="dark"] .pixip-auth-card{
+[data-theme="dark"] .grade-auth-card{
     background: rgba(15,23,42,.95);
     border: 1px solid rgba(148,163,184,.18);
     box-shadow: 0 24px 50px rgba(0,0,0,.55);
 }
 
-[data-theme="dark"] .pixip-auth-card .form-control,
-[data-theme="dark"] .pixip-auth-card .form-select{
+[data-theme="dark"] .grade-auth-card .form-control,
+[data-theme="dark"] .grade-auth-card .form-select{
     background: rgba(2,6,23,.65);
     border-color: rgba(148,163,184,.2);
     color: #e5e7eb;
 }
 
-[data-theme="dark"] .pixip-auth-card .form-control::placeholder{
+[data-theme="dark"] .grade-auth-card .form-control::placeholder{
     color: #94a3b8;
 }
 
-[data-theme="dark"] .pixip-auth-title{
+[data-theme="dark"] .grade-auth-title{
     color: #f8fafc;
 }
 
-[data-theme="dark"] .pixip-auth-subtitle,
-[data-theme="dark"] .pixip-auth-note{
+[data-theme="dark"] .grade-auth-subtitle,
+[data-theme="dark"] .grade-auth-note{
     color: #94a3b8;
 }
 
-[data-theme="dark"] .pixip-auth-modal-card{
+[data-theme="dark"] .grade-auth-modal-card{
     background: rgba(15,23,42,.75);
     border: 1px solid rgba(148,163,184,.18);
 }
 
-[data-theme="dark"] .pixip-auth-modal-brand{
+[data-theme="dark"] .grade-auth-modal-brand{
     background: linear-gradient(160deg, rgba(15,23,42,.98), rgba(30,58,138,.9));
 }
 
@@ -286,18 +286,18 @@
 AUTH MODAL
 ====================================================== */
 
-.pixip-auth-modal .modal-body{
+.grade-auth-modal .modal-body{
     padding: 24px;
 }
 
-.pixip-auth-modal-shell{
+.grade-auth-modal-shell{
     display: grid;
     grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
     gap: 24px;
     align-items: stretch;
 }
 
-.pixip-auth-modal-brand{
+.grade-auth-modal-brand{
     position: relative;
     padding: 20px;
     border-radius: 18px;
@@ -310,7 +310,7 @@ AUTH MODAL
     overflow: hidden;
 }
 
-.pixip-auth-modal-brand::after{
+.grade-auth-modal-brand::after{
     content:'';
     position:absolute;
     inset: auto -60% -60% auto;
@@ -319,41 +319,41 @@ AUTH MODAL
     background: radial-gradient(circle, rgba(255,255,255,0.24), rgba(255,255,255,0));
 }
 
-.pixip-auth-modal-card{
+.grade-auth-modal-card{
     background: #fff;
     border-radius: 18px;
     padding: 12px 6px;
 }
 
-.pixip-auth-modal .pixip-auth-title{
+.grade-auth-modal .grade-auth-title{
     color: #0f172a;
 }
 
-.pixip-auth-modal .pixip-auth-subtitle{
+.grade-auth-modal .grade-auth-subtitle{
     color: #475569;
 }
 
 @media (max-width: 991px){
-    .pixip-auth-modal-shell{
+    .grade-auth-modal-shell{
         grid-template-columns: 1fr;
     }
 
-    .pixip-auth-modal-brand{
+    .grade-auth-modal-brand{
         min-height: auto;
     }
 }
 
 @media (max-width: 992px) {
-    .pixip-auth-shell {
+    .grade-auth-shell {
         grid-template-columns: 1fr;
         padding: 32px 6vw;
     }
 
-    .pixip-auth-aside {
+    .grade-auth-aside {
         order: 2;
     }
 
-    .pixip-auth-card {
+    .grade-auth-card {
         max-width: 100%;
     }
 }

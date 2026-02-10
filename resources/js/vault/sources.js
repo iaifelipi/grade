@@ -42,7 +42,7 @@ export default function initSources(){
 
 
     /* ======================================================
-       HTTP helper (PIXIP padrão)
+       HTTP helper (Grade padrão)
     ====================================================== */
 
     async function http(url, opts = {}) {

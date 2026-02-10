@@ -1,14 +1,14 @@
 @extends('layouts.guest')
 
-@section('title','Redefinir senha • PIXIP')
+@section('title','Redefinir senha • Grade')
 
 @section('content')
-<div class="pixip-auth-header">
-    <div class="pixip-auth-icon">
+<div class="grade-auth-header">
+    <div class="grade-auth-icon">
         <i class="bi bi-key-fill"></i>
     </div>
-    <div class="pixip-auth-title">Redefinir senha</div>
-    <div class="pixip-auth-subtitle">Crie uma nova senha segura</div>
+    <div class="grade-auth-title">Redefinir senha</div>
+    <div class="grade-auth-subtitle">Crie uma nova senha segura</div>
 </div>
 
 @if ($errors->any())
@@ -46,7 +46,7 @@
     </button>
 </form>
 
-<div class="pixip-auth-note">
-    Já tem acesso? <a class="pixip-auth-link" href="{{ route('login') }}">Voltar ao login</a>
+<div class="grade-auth-note">
+    Já tem acesso? <a class="grade-auth-link" href="{{ route('login') }}">Voltar ao login</a>
 </div>
 @endsection

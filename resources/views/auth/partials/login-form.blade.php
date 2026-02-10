@@ -1,9 +1,9 @@
-<div class="pixip-auth-header">
-    <div class="pixip-auth-icon">
+<div class="grade-auth-header">
+    <div class="grade-auth-icon">
         <i class="bi bi-envelope-fill"></i>
     </div>
-    <div class="pixip-auth-title">Bem-vindo de volta</div>
-    <div class="pixip-auth-subtitle">Entre com seus dados para continuar</div>
+    <div class="grade-auth-title">Bem-vindo de volta</div>
+    <div class="grade-auth-subtitle">Entre com seus dados para continuar</div>
 </div>
 
 <form method="POST" action="{{ route('login') }}" data-auth-form="login">
@@ -29,13 +29,13 @@
         <input type="password" name="password" class="form-control" required>
     </div>
 
-    <div class="pixip-auth-actions">
+    <div class="grade-auth-actions">
         <div class="form-check">
             <input type="checkbox" name="remember" class="form-check-input">
             <label class="form-check-label">Lembrar</label>
         </div>
 
-        <button type="button" class="pixip-auth-link btn btn-link p-0" data-auth-switch="forgot">
+        <button type="button" class="grade-auth-link btn btn-link p-0" data-auth-switch="forgot">
             Esqueci a senha
         </button>
     </div>

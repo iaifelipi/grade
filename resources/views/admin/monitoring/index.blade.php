@@ -172,8 +172,8 @@
             <div class="d-flex flex-wrap gap-2 mb-2">
                 <span class="badge text-bg-light border"><code>php artisan queue:restart</code></span>
                 <span class="badge text-bg-light border"><code>sudo supervisorctl status</code></span>
-                <span class="badge text-bg-light border"><code>sudo supervisorctl restart pixip-imports:*</code></span>
-                <span class="badge text-bg-light border"><code>sudo supervisorctl restart pixip-normalize:*</code></span>
+                <span class="badge text-bg-light border"><code>sudo supervisorctl restart grade-imports:*</code></span>
+                <span class="badge text-bg-light border"><code>sudo supervisorctl restart grade-normalize:*</code></span>
             </div>
             <div class="small text-muted mb-2">
                 Recuperação por fila exige confirmação segura: digite <code>RECUPERAR NOME_DA_FILA</code>.

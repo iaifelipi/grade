@@ -43,7 +43,7 @@ body {
 
 
 /* auth pages */
-.pixip-auth-card {
+.grade-auth-card {
     border-radius: 18px;
 }
 
@@ -57,7 +57,7 @@ body {
    PREMIUM MODALS (GLOBAL)
 ====================================================== */
 
-.pixip-modal-premium {
+.grade-modal-premium {
     border: 1px solid #d4e0ef;
     border-radius: 18px;
     overflow: hidden;
@@ -69,24 +69,24 @@ body {
         0 12px 24px -20px rgba(15,23,42,.3);
 }
 
-.pixip-modal-premium .modal-header {
+.grade-modal-premium .modal-header {
     border-bottom-color: #dce6f3;
     background: rgba(255,255,255,.66);
     backdrop-filter: blur(8px);
 }
 
-.pixip-modal-premium .modal-footer {
+.grade-modal-premium .modal-footer {
     border-top-color: #dce6f3;
     background: rgba(248,251,255,.92);
 }
 
-.pixip-modal-premium .modal-title {
+.grade-modal-premium .modal-title {
     font-weight: 700;
     letter-spacing: .01em;
     color: #0f172a;
 }
 
-[data-theme="dark"] .pixip-modal-premium {
+[data-theme="dark"] .grade-modal-premium {
     border-color: rgba(148,163,184,.26);
     background:
         radial-gradient(circle at top right, rgba(56,189,248,.18), transparent 42%),
@@ -96,17 +96,17 @@ body {
         0 14px 32px -22px rgba(0,0,0,.55);
 }
 
-[data-theme="dark"] .pixip-modal-premium .modal-header {
+[data-theme="dark"] .grade-modal-premium .modal-header {
     border-bottom-color: rgba(148,163,184,.22);
     background: rgba(15,23,42,.58);
 }
 
-[data-theme="dark"] .pixip-modal-premium .modal-footer {
+[data-theme="dark"] .grade-modal-premium .modal-footer {
     border-top-color: rgba(148,163,184,.18);
     background: rgba(9,16,30,.68);
 }
 
-[data-theme="dark"] .pixip-modal-premium .modal-title {
+[data-theme="dark"] .grade-modal-premium .modal-title {
     color: #f8fafc;
 }
 

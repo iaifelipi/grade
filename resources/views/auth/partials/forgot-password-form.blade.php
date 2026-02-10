@@ -1,9 +1,9 @@
-<div class="pixip-auth-header">
-    <div class="pixip-auth-icon">
+<div class="grade-auth-header">
+    <div class="grade-auth-icon">
         <i class="bi bi-shield-lock-fill"></i>
     </div>
-    <div class="pixip-auth-title">Recuperar senha</div>
-    <div class="pixip-auth-subtitle">Vamos enviar um link para redefinir sua senha</div>
+    <div class="grade-auth-title">Recuperar senha</div>
+    <div class="grade-auth-subtitle">Vamos enviar um link para redefinir sua senha</div>
 </div>
 
 @if (session('status'))
@@ -35,7 +35,7 @@
     </button>
 </form>
 
-<div class="pixip-auth-note">
+<div class="grade-auth-note">
     Lembrou da senha?
-    <button type="button" class="pixip-auth-link btn btn-link p-0 align-baseline" data-auth-switch="login">Voltar ao login</button>
+    <button type="button" class="grade-auth-link btn btn-link p-0 align-baseline" data-auth-switch="login">Voltar ao login</button>
 </div>

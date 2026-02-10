@@ -10,9 +10,9 @@ class QueueHealthService
     public function snapshot(): array
     {
         $queues = [
-            'imports' => ['expected' => 2, 'program' => 'pixip-imports:'],
-            'normalize' => ['expected' => 2, 'program' => 'pixip-normalize:'],
-            'extras' => ['expected' => 1, 'program' => 'pixip-extras:'],
+            'imports' => ['expected' => 2, 'program' => 'grade-imports:'],
+            'normalize' => ['expected' => 2, 'program' => 'grade-normalize:'],
+            'extras' => ['expected' => 1, 'program' => 'grade-extras:'],
         ];
 
         $supervisorStatuses = $this->readSupervisorStatuses();
@@ -86,7 +86,7 @@ class QueueHealthService
      */
     private function readSupervisorStatuses(): ?array
     {
-        $output = @shell_exec('supervisorctl status pixip-imports:* pixip-normalize:* pixip-extras:* 2>&1');
+        $output = @shell_exec('supervisorctl status grade-imports:* grade-normalize:* grade-extras:* 2>&1');
         if (!is_string($output) || trim($output) === '') {
             return null;
         }

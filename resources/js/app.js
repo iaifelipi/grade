@@ -1,5 +1,5 @@
 /* =========================================================
- * PIXIP CORE — GLOBAL BOOTSTRAP (FINAL ENTERPRISE)
+ * Grade CORE — GLOBAL BOOTSTRAP (FINAL ENTERPRISE)
  * ========================================================= */
 
 import * as bootstrap from 'bootstrap'
@@ -26,7 +26,7 @@ boot()
 
 async function boot(){
 
-    console.log('⚡ PIXIP ready')
+    console.log('⚡ Grade ready')
 
     /* =====================================================
        GLOBAL
@@ -135,7 +135,7 @@ async function boot(){
 function initPremiumModals(){
     const applyPremiumClass = (root = document)=>{
         root.querySelectorAll?.('.modal .modal-content')?.forEach((el)=>{
-            el.classList.add('pixip-modal-premium')
+            el.classList.add('grade-modal-premium')
         })
     }
 
@@ -147,7 +147,7 @@ function initPremiumModals(){
             mutation.addedNodes.forEach((node)=>{
                 if(!(node instanceof Element)) return
                 if(node.matches?.('.modal .modal-content')){
-                    node.classList.add('pixip-modal-premium')
+                    node.classList.add('grade-modal-premium')
                 }
                 if(node.matches?.('.modal')){
                     applyPremiumClass(node)
@@ -162,16 +162,16 @@ function initPremiumModals(){
 }
 
 function initTopbar(){
-    const topbar = document.querySelector('.pixip-topbar')
+    const topbar = document.querySelector('.grade-topbar')
     const userBtn = document.querySelector('[data-user-toggle]')
     const userMenu = document.querySelector('[data-user-menu]')
     const userThemeToggle = document.getElementById('userThemeToggle')
     const userConfigPanelToggle = document.getElementById('userConfigPanelToggle')
     const userLanguageSelect = document.getElementById('userLanguageSelect')
-    const configRail = document.getElementById('pixipConfigRail')
-    const THEME_STORAGE_KEY = 'pixip.theme.override'
-    const CONFIG_RAIL_STORAGE_KEY = 'pixip.config.rail.open'
-    const LANG_STORAGE_KEY = 'pixip.language'
+    const configRail = document.getElementById('gradeConfigRail')
+    const THEME_STORAGE_KEY = 'grade.theme.override'
+    const CONFIG_RAIL_STORAGE_KEY = 'grade.config.rail.open'
+    const LANG_STORAGE_KEY = 'grade.language'
 
     const syncConfigRailOffset = ()=>{
         if(!topbar) return
@@ -215,7 +215,7 @@ function initTopbar(){
     }
 
     if(userThemeToggle){
-        const userThemeToggleText = userThemeToggle.querySelector('.pixip-user-switch-text')
+        const userThemeToggleText = userThemeToggle.querySelector('.grade-user-switch-text')
         const syncThemeToggle = ()=>{
             const isDark = document.body?.getAttribute('data-theme') === 'dark'
             userThemeToggle.classList.toggle('is-on', isDark)
@@ -403,7 +403,7 @@ function initTopbar(){
 
 function initTheme(){
     const body = document.body
-    const stored = localStorage.getItem('pixip.theme.override')
+    const stored = localStorage.getItem('grade.theme.override')
     const pref = body?.getAttribute('data-theme-pref') || 'system'
 
     const apply = (mode)=>{

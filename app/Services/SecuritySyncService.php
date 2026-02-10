@@ -20,7 +20,7 @@ class SecuritySyncService
             'max_tries' => $maxTries,
         ];
 
-        $script = base_path('scripts/pixip-security-sync-missing.sh');
+        $script = base_path('scripts/grade-security-sync-missing.sh');
         if (!is_file($script) || !is_executable($script)) {
             Log::warning('security sync script missing or not executable', [
                 'script' => $script,

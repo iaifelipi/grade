@@ -4,29 +4,29 @@
 @section('page-title','Perfil')
 
 @section('content')
-<div class="container pixip-profile">
-    <div class="pixip-profile-hero">
-        <div class="pixip-profile-identity">
-            <div class="pixip-profile-avatar">
+<div class="container grade-profile">
+    <div class="grade-profile-hero">
+        <div class="grade-profile-identity">
+            <div class="grade-profile-avatar">
                 <span>{{ strtoupper(substr($user->name, 0, 1)) }}</span>
             </div>
             <div>
-                <h2 class="pixip-profile-title">
+                <h2 class="grade-profile-title">
                     {{ trim(explode(' ', $user->name)[0] ?? $user->name) }}
                 </h2>
-                <div class="pixip-profile-sub">
+                <div class="grade-profile-sub">
                     <span>{{ $user->email }}</span>
-                    <span class="pixip-profile-dot"></span>
-                    <button type="button" class="pixip-uuid-chip" data-slug="{{ $conta->slug ?? '' }}">
+                    <span class="grade-profile-dot"></span>
+                    <button type="button" class="grade-uuid-chip" data-slug="{{ $conta->slug ?? '' }}">
                         Usuário: {{ $conta->slug ?? '—' }}
                     </button>
                 </div>
-                <div class="pixip-profile-plan">
+                <div class="grade-profile-plan">
                     Plano: <strong>{{ $conta->plan ?? 'free' }}</strong>
                 </div>
             </div>
         </div>
-        <div class="pixip-profile-status">
+        <div class="grade-profile-status">
             @if(session('status') === 'profile-updated')
                 <div class="alert alert-success mb-0">Dados pessoais atualizados.</div>
             @elseif(session('status') === 'password-updated')
@@ -48,28 +48,28 @@
         </div>
     @endif
 
-    <div class="pixip-profile-grid">
-        <aside class="pixip-profile-nav">
-            <div class="pixip-profile-nav-card">
-                <a href="#profile-personal" class="pixip-profile-nav-link">Dados pessoais</a>
-                <a href="#profile-security" class="pixip-profile-nav-link">Segurança</a>
-                <a href="#profile-preferences" class="pixip-profile-nav-link">Preferências</a>
-                <a href="#profile-location" class="pixip-profile-nav-link">Localização</a>
-                <a href="#profile-danger" class="pixip-profile-nav-link text-danger">Zona de risco</a>
+    <div class="grade-profile-grid">
+        <aside class="grade-profile-nav">
+            <div class="grade-profile-nav-card">
+                <a href="#profile-personal" class="grade-profile-nav-link">Dados pessoais</a>
+                <a href="#profile-security" class="grade-profile-nav-link">Segurança</a>
+                <a href="#profile-preferences" class="grade-profile-nav-link">Preferências</a>
+                <a href="#profile-location" class="grade-profile-nav-link">Localização</a>
+                <a href="#profile-danger" class="grade-profile-nav-link text-danger">Zona de risco</a>
             </div>
-            <div class="pixip-profile-tip">
-                <div class="pixip-profile-tip-title">Dica rápida</div>
+            <div class="grade-profile-tip">
+                <div class="grade-profile-tip-title">Dica rápida</div>
                 <p>Use o modo escuro para reduzir fadiga visual em longas sessões.</p>
             </div>
         </aside>
 
-        <div class="pixip-profile-content">
-            <section id="profile-personal" class="pixip-profile-card">
-                <div class="pixip-profile-card-header">
+        <div class="grade-profile-content">
+            <section id="profile-personal" class="grade-profile-card">
+                <div class="grade-profile-card-header">
                     <h3>Dados pessoais</h3>
                     <span>Atualize nome e email</span>
                 </div>
-                <form method="POST" action="{{ route('profile.update') }}" class="pixip-profile-form">
+                <form method="POST" action="{{ route('profile.update') }}" class="grade-profile-form">
                     @csrf
                     @method('PATCH')
                     <div class="row g-3">
@@ -82,18 +82,18 @@
                             <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
                         </div>
                     </div>
-                    <div class="pixip-profile-actions">
+                    <div class="grade-profile-actions">
                         <button type="submit" class="btn btn-primary">Salvar alterações</button>
                     </div>
                 </form>
             </section>
 
-            <section id="profile-security" class="pixip-profile-card">
-                <div class="pixip-profile-card-header">
+            <section id="profile-security" class="grade-profile-card">
+                <div class="grade-profile-card-header">
                     <h3>Segurança</h3>
                     <span>Altere sua senha com segurança</span>
                 </div>
-                <form method="POST" action="{{ route('password.update') }}" class="pixip-profile-form">
+                <form method="POST" action="{{ route('password.update') }}" class="grade-profile-form">
                     @csrf
                     @method('PUT')
                     <div class="row g-3">
@@ -110,18 +110,18 @@
                             <input type="password" name="password_confirmation" class="form-control" required>
                         </div>
                     </div>
-                    <div class="pixip-profile-actions">
+                    <div class="grade-profile-actions">
                         <button type="submit" class="btn btn-primary">Atualizar senha</button>
                     </div>
                 </form>
             </section>
 
-            <section id="profile-preferences" class="pixip-profile-card">
-                <div class="pixip-profile-card-header">
+            <section id="profile-preferences" class="grade-profile-card">
+                <div class="grade-profile-card-header">
                     <h3>Preferências</h3>
                     <span>Idioma, fuso e tema</span>
                 </div>
-                <form method="POST" action="{{ route('profile.preferences') }}" class="pixip-profile-form">
+                <form method="POST" action="{{ route('profile.preferences') }}" class="grade-profile-form">
                     @csrf
                     @method('PUT')
                     <div class="row g-3">
@@ -145,12 +145,12 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Tema</label>
-                            <div class="pixip-theme-toggle">
-                                <label class="pixip-theme-option">
+                            <div class="grade-theme-toggle">
+                                <label class="grade-theme-option">
                                     <input type="radio" name="theme" value="light" @checked(old('theme', $user->theme) === 'light')>
                                     <span>Claro</span>
                                 </label>
-                                <label class="pixip-theme-option">
+                                <label class="grade-theme-option">
                                     <input type="radio" name="theme" value="dark" @checked(old('theme', $user->theme) === 'dark')>
                                     <span>Escuro</span>
                                 </label>
@@ -165,18 +165,18 @@
                             <small class="text-muted">Use letras minúsculas e hífens.</small>
                         </div>
                     </div>
-                    <div class="pixip-profile-actions">
+                    <div class="grade-profile-actions">
                         <button type="submit" class="btn btn-primary">Salvar preferências</button>
                     </div>
                 </form>
             </section>
 
-            <section id="profile-location" class="pixip-profile-card">
-                <div class="pixip-profile-card-header">
+            <section id="profile-location" class="grade-profile-card">
+                <div class="grade-profile-card-header">
                     <h3>Localização</h3>
                     <span>Informações para relatórios e filtros</span>
                 </div>
-                <form method="POST" action="{{ route('profile.preferences') }}" class="pixip-profile-form">
+                <form method="POST" action="{{ route('profile.preferences') }}" class="grade-profile-form">
                     @csrf
                     @method('PUT')
                     <div class="row g-3">
@@ -193,18 +193,18 @@
                             <input type="text" name="location_country" class="form-control" value="{{ old('location_country', $user->location_country) }}">
                         </div>
                     </div>
-                    <div class="pixip-profile-actions">
+                    <div class="grade-profile-actions">
                         <button type="submit" class="btn btn-primary">Salvar localização</button>
                     </div>
                 </form>
             </section>
 
-            <section id="profile-danger" class="pixip-profile-card pixip-profile-danger">
-                <div class="pixip-profile-card-header">
+            <section id="profile-danger" class="grade-profile-card grade-profile-danger">
+                <div class="grade-profile-card-header">
                     <h3>Zona de risco</h3>
                     <span>Ações irreversíveis</span>
                 </div>
-                <form method="POST" action="{{ route('profile.destroy') }}" class="pixip-profile-form">
+                <form method="POST" action="{{ route('profile.destroy') }}" class="grade-profile-form">
                     @csrf
                     @method('DELETE')
                     <p class="text-muted mb-3">Excluir sua conta remove definitivamente seus dados pessoais.</p>

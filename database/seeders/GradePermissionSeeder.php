@@ -7,14 +7,14 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Permission;
 
-class PixipPermissionSeeder extends Seeder
+class GradePermissionSeeder extends Seeder
 {
     public function run(): void
     {
         // role templates são aplicados após criar permissões
         /*
         |--------------------------------------------------------------------------
-        | PERMISSÕES PIXIP (organizadas por módulo)
+        | PERMISSÕES Grade (organizadas por módulo)
         |--------------------------------------------------------------------------
         */
 
