@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SRC_ROOT="/var/www/painel1/storage/app/private/tenants"
-SRC_GUEST_ROOT="/var/www/painel1/storage/app/private/tenants_guest"
-DST_ROOT="/var/www/painel1/security"
-LOG_DIR="/var/www/painel1/storage/logs/security"
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SRC_ROOT="$APP_ROOT/storage/app/private/tenants"
+SRC_GUEST_ROOT="$APP_ROOT/storage/app/private/tenants_guest"
+DST_ROOT="$APP_ROOT/security"
+LOG_DIR="$APP_ROOT/storage/logs/security"
 LOG_FILE="$LOG_DIR/grade-security-sync-missing.log"
 LOCK_FILE="/tmp/grade-security-sync-missing.lock"
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SECURITY_ROOT="/var/www/painel1/security"
-LOG_DIR="/var/www/painel1/storage/logs/security"
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SECURITY_ROOT="$APP_ROOT/security"
+LOG_DIR="$APP_ROOT/storage/logs/security"
 LOG_FILE="$LOG_DIR/grade-security-lock.log"
 
 mkdir -p "$LOG_DIR"
@@ -24,4 +25,3 @@ while IFS= read -r -d '' FILE; do
 done < <(find "$SECURITY_ROOT" -type f -print0)
 
 echo "$(date '+%F %T') [INFO] lock finalizado: locked=$LOCKED failed=$FAILED" >> "$LOG_FILE"
-

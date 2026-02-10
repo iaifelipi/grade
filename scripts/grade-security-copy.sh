@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_PRIVATE_ROOT="/var/www/painel1/storage/app/private/tenants"
-APP_PRIVATE_GUEST_ROOT="/var/www/painel1/storage/app/private/tenants_guest"
-SECURITY_ROOT="/var/www/painel1/security"
-LOG_FILE="/var/www/painel1/storage/logs/security/grade-security-copy.log"
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APP_PRIVATE_ROOT="$APP_ROOT/storage/app/private/tenants"
+APP_PRIVATE_GUEST_ROOT="$APP_ROOT/storage/app/private/tenants_guest"
+SECURITY_ROOT="$APP_ROOT/security"
+LOG_FILE="$APP_ROOT/storage/logs/security/grade-security-copy.log"
 LOCK_FILE="/tmp/grade-security-copy.lock"
 
 exec 9>"$LOCK_FILE"
