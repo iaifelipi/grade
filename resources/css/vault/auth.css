@@ -1,0 +1,359 @@
+.pixip-auth-body {
+    background: radial-gradient(circle at top, rgba(99, 102, 241, 0.08), transparent 45%),
+        radial-gradient(circle at 70% 20%, rgba(59, 130, 246, 0.12), transparent 40%),
+        #f7f8fc;
+    min-height: 100vh;
+}
+
+.pixip-auth-shell {
+    display: grid;
+    grid-template-columns: minmax(280px, 420px) minmax(320px, 1fr);
+    min-height: 100vh;
+    gap: 32px;
+    padding: 40px 6vw;
+}
+
+.pixip-auth-aside {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 28px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.35);
+}
+
+.pixip-auth-aside::before {
+    content: '';
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    right: -60px;
+    top: -60px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.35);
+}
+
+.pixip-auth-aside::after {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    left: -80px;
+    bottom: -80px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.25);
+}
+
+.pixip-auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 2;
+}
+
+.pixip-auth-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: #fff;
+    color: #0f172a;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.pixip-auth-name {
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.2px;
+}
+
+.pixip-auth-tagline {
+    font-size: 13px;
+    color: #cbd5f5;
+}
+
+.pixip-auth-aside-card {
+    margin-top: 28px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 18px;
+    position: relative;
+    z-index: 2;
+}
+
+.pixip-auth-aside-card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.pixip-auth-aside-card ul {
+    padding-left: 18px;
+    margin-bottom: 0;
+    font-size: 13px;
+    color: #e2e8f0;
+}
+
+.pixip-auth-aside-card li + li {
+    margin-top: 8px;
+}
+
+.pixip-auth-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.pixip-auth-metrics div {
+    background: rgba(15, 23, 42, 0.75);
+    border-radius: 14px;
+    padding: 12px 14px;
+}
+
+.pixip-auth-metrics span {
+    display: block;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.pixip-auth-metrics small {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.pixip-auth-main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+}
+
+.pixip-auth-card {
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+    border: 1px solid #e5e7eb;
+    max-width: 460px;
+    padding: 0;
+}
+
+.pixip-auth-card-body {
+    padding: 28px;
+}
+
+.pixip-auth-header {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.pixip-auth-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: #eef2ff;
+    color: #4f46e5;
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+    margin: 0 auto 16px;
+}
+
+.pixip-auth-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.pixip-auth-subtitle {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.pixip-auth-footer {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.pixip-auth-link {
+    font-weight: 600;
+    color: #4f46e5;
+    text-decoration: none;
+}
+
+.pixip-auth-link:hover {
+    text-decoration: underline;
+}
+
+.pixip-auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.pixip-auth-divider::before,
+.pixip-auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.pixip-auth-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.pixip-auth-actions .form-check-label {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.pixip-auth-note {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.pixip-auth-card .form-control,
+.pixip-auth-card .form-select {
+    border-radius: 12px;
+    padding: 10px 14px;
+    border-color: #e2e8f0;
+}
+
+.pixip-auth-card .btn-primary {
+    border-radius: 12px;
+    padding: 10px 16px;
+}
+
+[data-theme="dark"] .pixip-auth-body{
+    background: radial-gradient(circle at 20% 0%, rgba(59,130,246,.18), transparent 40%),
+                radial-gradient(circle at 80% 0%, rgba(99,102,241,.18), transparent 40%),
+                #0a0f1f;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .pixip-auth-card{
+    background: rgba(15,23,42,.95);
+    border: 1px solid rgba(148,163,184,.18);
+    box-shadow: 0 24px 50px rgba(0,0,0,.55);
+}
+
+[data-theme="dark"] .pixip-auth-card .form-control,
+[data-theme="dark"] .pixip-auth-card .form-select{
+    background: rgba(2,6,23,.65);
+    border-color: rgba(148,163,184,.2);
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .pixip-auth-card .form-control::placeholder{
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .pixip-auth-title{
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .pixip-auth-subtitle,
+[data-theme="dark"] .pixip-auth-note{
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .pixip-auth-modal-card{
+    background: rgba(15,23,42,.75);
+    border: 1px solid rgba(148,163,184,.18);
+}
+
+[data-theme="dark"] .pixip-auth-modal-brand{
+    background: linear-gradient(160deg, rgba(15,23,42,.98), rgba(30,58,138,.9));
+}
+
+/* ======================================================
+AUTH MODAL
+====================================================== */
+
+.pixip-auth-modal .modal-body{
+    padding: 24px;
+}
+
+.pixip-auth-modal-shell{
+    display: grid;
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: stretch;
+}
+
+.pixip-auth-modal-brand{
+    position: relative;
+    padding: 20px;
+    border-radius: 18px;
+    background: linear-gradient(160deg, rgba(15,23,42,0.95), rgba(30,64,175,0.9));
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 240px;
+    overflow: hidden;
+}
+
+.pixip-auth-modal-brand::after{
+    content:'';
+    position:absolute;
+    inset: auto -60% -60% auto;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255,255,255,0.24), rgba(255,255,255,0));
+}
+
+.pixip-auth-modal-card{
+    background: #fff;
+    border-radius: 18px;
+    padding: 12px 6px;
+}
+
+.pixip-auth-modal .pixip-auth-title{
+    color: #0f172a;
+}
+
+.pixip-auth-modal .pixip-auth-subtitle{
+    color: #475569;
+}
+
+@media (max-width: 991px){
+    .pixip-auth-modal-shell{
+        grid-template-columns: 1fr;
+    }
+
+    .pixip-auth-modal-brand{
+        min-height: auto;
+    }
+}
+
+@media (max-width: 992px) {
+    .pixip-auth-shell {
+        grid-template-columns: 1fr;
+        padding: 32px 6vw;
+    }
+
+    .pixip-auth-aside {
+        order: 2;
+    }
+
+    .pixip-auth-card {
+        max-width: 100%;
+    }
+}

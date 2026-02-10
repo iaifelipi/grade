@@ -1,0 +1,64 @@
+.vault-standard-toolbar{
+    padding:0;
+    margin:0;
+}
+
+.vault-standard-toolbar__actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.vault-standard-toolbar__actions .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    border-radius:10px;
+    padding:6px 10px;
+    font-weight:600;
+}
+
+.vault-standard-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+    padding:14px 16px;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    background:linear-gradient(180deg,#ffffff,#f8fbff);
+}
+
+.vault-standard-header__title{
+    margin:0 0 4px;
+    font-size:20px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+.vault-standard-header__subtitle{
+    margin:0;
+    color:#64748b;
+    font-size:13px;
+}
+
+.vault-standard-header__actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+@media (max-width: 991px){
+    .vault-standard-toolbar__actions{
+        width:100%;
+        justify-content:flex-start;
+    }
+
+    .vault-standard-header{
+        flex-direction:column;
+        align-items:stretch;
+    }
+}

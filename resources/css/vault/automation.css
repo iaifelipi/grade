@@ -1,0 +1,446 @@
+.vault-automation{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    padding-bottom:8px;
+}
+
+.vault-page.vault-automation{
+    max-width:none;
+    width:100%;
+    margin:0;
+}
+
+.vault-automation::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(59,130,246,.08), transparent 60%),
+        radial-gradient(900px 420px at 95% -10%, rgba(16,185,129,.08), transparent 60%);
+}
+
+.vault-automation > *{
+    position:relative;
+    z-index:1;
+}
+
+.vault-automation .vault-card{
+    border:1px solid #dbe5f0;
+    background:linear-gradient(180deg,#ffffff,#f8fbff);
+    box-shadow:0 18px 36px -30px rgba(15,23,42,.55);
+    border-radius:16px;
+    overflow:hidden;
+}
+
+.auto-stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:10px;
+}
+
+.auto-stat{
+    background:linear-gradient(180deg,#ffffff,#f8fbff);
+    border:1px solid #dbe5f0;
+    border-radius:12px;
+    padding:14px 12px;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    position:relative;
+    overflow:hidden;
+}
+
+.auto-stat:hover{
+    transform:translateY(-1px);
+    border-color:#bfdbfe;
+    box-shadow:0 12px 24px -22px rgba(37,99,235,.5);
+}
+
+.auto-stat::after{
+    content:"";
+    position:absolute;
+    inset:auto -30% -70% auto;
+    width:120px;
+    height:120px;
+    border-radius:999px;
+    background:radial-gradient(circle, rgba(59,130,246,.12), transparent 70%);
+}
+
+.auto-stat h3{
+    margin:0;
+    font-size:24px;
+    line-height:1.1;
+    color:#0f172a;
+}
+
+.auto-stat span{
+    display:block;
+    margin-top:4px;
+    font-size:12px;
+    color:#64748b;
+}
+
+.auto-table{
+    width:100%;
+    overflow:auto;
+    border:1px solid #dbe5f0;
+    border-radius:12px;
+    background:#fff;
+    max-height:420px;
+}
+
+.auto-table table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:820px;
+}
+
+.auto-table th,
+.auto-table td{
+    padding:10px;
+    border-bottom:1px solid #eaf0f6;
+    text-align:left;
+    font-size:13px;
+    vertical-align:middle;
+}
+
+.auto-table thead th{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:#5b6b82;
+    background:#f5f9ff;
+    position:sticky;
+    top:0;
+    z-index:2;
+    backdrop-filter:blur(4px);
+}
+
+.auto-table tbody tr:hover{
+    background:#f8fbff;
+}
+
+.auto-table tbody tr:nth-child(even){
+    background:#fcfdff;
+}
+
+.auto-table tbody tr.is-selected{
+    background:#ecfeff;
+}
+
+.auto-table .btn-link{
+    color:#1d4ed8;
+    font-weight:600;
+}
+
+.auto-table .btn-link:hover{
+    color:#1e40af;
+}
+
+.auto-actions-cell{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.auto-inline-meta{
+    font-size:12px;
+    color:#1e40af;
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    border-radius:999px;
+    padding:3px 10px;
+}
+
+.vault-automation h6{
+    font-weight:700;
+    letter-spacing:.01em;
+    color:#0f172a;
+}
+
+.vault-automation .form-label{
+    font-size:12px;
+    font-weight:600;
+    color:#475569;
+    letter-spacing:.01em;
+    margin-bottom:4px;
+}
+
+#stepsEditorBody .form-control,
+#stepsEditorBody .form-select{
+    min-width:96px;
+}
+
+.vault-automation .btn{
+    border-radius:10px;
+    font-weight:600;
+    letter-spacing:.01em;
+}
+
+.vault-automation .form-control,
+.vault-automation .form-select{
+    border-radius:10px;
+    min-height:38px;
+    border-color:#cbd9ea;
+}
+
+.vault-automation .form-control:focus,
+.vault-automation .form-select:focus{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 3px rgba(59,130,246,.16);
+}
+
+#automationStatusText{
+    min-height:20px;
+}
+
+.auto-status-pill{
+    display:inline-flex;
+    align-items:center;
+    min-height:30px;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid #dbe5f0;
+    background:#f8fbff;
+    font-size:12px;
+    transition:all .18s ease;
+}
+
+.auto-status-pill.is-success{
+    border-color:#bfdbfe;
+    background:#eff6ff;
+    color:#1e3a8a !important;
+}
+
+.auto-status-pill.is-error{
+    border-color:#fecaca;
+    background:#fef2f2;
+    color:#991b1b !important;
+}
+
+.auto-cancel-notice{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    border:1px solid #fcd34d;
+    background:linear-gradient(180deg,#fffbeb,#fef3c7);
+    border-radius:12px;
+    padding:10px 12px;
+    margin:-2px 0 12px;
+}
+
+.auto-cancel-notice__icon{
+    color:#b45309;
+    font-size:18px;
+    line-height:1;
+}
+
+.auto-cancel-notice__body{
+    flex:1;
+    font-size:12px;
+    color:#78350f;
+}
+
+.auto-cancel-notice__body strong{
+    display:block;
+    margin-bottom:2px;
+    font-size:12px;
+    letter-spacing:.01em;
+}
+
+.auto-spin{
+    display:inline-block;
+    animation:auto-spin-rotate 1s linear infinite;
+}
+
+@keyframes auto-spin-rotate{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce){
+    .auto-spin{
+        animation:none;
+    }
+}
+
+[data-theme="dark"] .vault-automation .vault-card{
+    background:linear-gradient(180deg,#0f172af7,#0b1220f2);
+    border-color:rgba(148,163,184,.24);
+    box-shadow:0 24px 46px -26px rgba(0,0,0,.85);
+}
+
+[data-theme="dark"] .auto-stat{
+    background:linear-gradient(180deg,#111c31,#0d1728);
+    border-color:rgba(148,163,184,.24);
+    box-shadow:inset 0 1px 0 rgba(148,163,184,.08);
+}
+
+[data-theme="dark"] .auto-stat:hover{
+    border-color:rgba(96,165,250,.65);
+    box-shadow:0 14px 28px -24px rgba(59,130,246,.65);
+}
+
+[data-theme="dark"] .auto-stat h3{
+    color:#f8fafc;
+}
+
+[data-theme="dark"] .auto-stat span{
+    color:#9fb2cc;
+}
+
+[data-theme="dark"] .auto-table{
+    border-color:rgba(148,163,184,.24);
+    background:#0f172acc;
+}
+
+[data-theme="dark"] .auto-table th,
+[data-theme="dark"] .auto-table td{
+    border-bottom-color:rgba(148,163,184,.16);
+    color:#dbe7ff;
+}
+
+[data-theme="dark"] .auto-table thead th{
+    background:#121f35;
+    color:#9fb2cc;
+    backdrop-filter:blur(6px);
+}
+
+[data-theme="dark"] .auto-table tbody tr:hover{
+    background:#16233a;
+}
+
+[data-theme="dark"] .auto-table tbody tr:nth-child(even){
+    background:#111d32;
+}
+
+[data-theme="dark"] .auto-table tbody tr.is-selected{
+    background:#1a2d44;
+}
+
+[data-theme="dark"] .auto-table .btn-link{
+    color:#93c5fd;
+}
+
+[data-theme="dark"] .auto-table .btn-link:hover{
+    color:#bfdbfe;
+}
+
+[data-theme="dark"] .auto-inline-meta{
+    color:#bfdbfe;
+    background:rgba(30,58,138,.35);
+    border-color:rgba(96,165,250,.45);
+}
+
+[data-theme="dark"] .vault-automation h6,
+[data-theme="dark"] .vault-automation .form-label{
+    color:#dbe7ff;
+}
+
+[data-theme="dark"] .vault-automation .badge.text-bg-light{
+    background:#1e293b !important;
+    color:#dbe7ff !important;
+    border:1px solid rgba(148,163,184,.38);
+}
+
+[data-theme="dark"] .vault-automation .badge.text-bg-warning.text-dark{
+    color:#1f2937 !important;
+}
+
+[data-theme="dark"] .auto-cancel-notice{
+    border-color:rgba(251,191,36,.48);
+    background:linear-gradient(180deg,rgba(120,53,15,.28),rgba(69,26,3,.28));
+}
+
+[data-theme="dark"] .auto-cancel-notice__icon{
+    color:#fbbf24;
+}
+
+[data-theme="dark"] .auto-cancel-notice__body{
+    color:#fde68a;
+}
+
+[data-theme="dark"] .vault-automation .form-control,
+[data-theme="dark"] .vault-automation .form-select,
+[data-theme="dark"] .vault-automation textarea{
+    background:#0a1323;
+    border-color:rgba(148,163,184,.3);
+    color:#e2e8f0;
+}
+
+[data-theme="dark"] .vault-automation .form-control::placeholder,
+[data-theme="dark"] .vault-automation textarea::placeholder{
+    color:#8ea4c2;
+}
+
+[data-theme="dark"] .vault-automation .form-control:focus,
+[data-theme="dark"] .vault-automation .form-select:focus,
+[data-theme="dark"] .vault-automation textarea:focus{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 3px rgba(59,130,246,.24);
+}
+
+[data-theme="dark"] .vault-automation .border,
+[data-theme="dark"] .vault-automation .rounded-3{
+    border-color:rgba(148,163,184,.26) !important;
+}
+
+[data-theme="dark"] .vault-automation .text-muted{
+    color:#9fb2cc !important;
+}
+
+[data-theme="dark"] .vault-automation .btn-outline-secondary{
+    border-color:rgba(148,163,184,.38);
+    color:#cfe2ff;
+}
+
+[data-theme="dark"] .vault-automation .btn-outline-secondary:hover{
+    background:#1b2b44;
+    border-color:rgba(148,163,184,.62);
+    color:#f8fafc;
+}
+
+[data-theme="dark"] .vault-automation .btn-outline-primary{
+    border-color:rgba(96,165,250,.6);
+    color:#bfdbfe;
+}
+
+[data-theme="dark"] .vault-automation .btn-outline-primary:hover{
+    background:rgba(59,130,246,.2);
+    border-color:rgba(96,165,250,.9);
+    color:#dbeafe;
+}
+
+[data-theme="dark"] .auto-stat::after{
+    background:radial-gradient(circle, rgba(56,189,248,.18), transparent 72%);
+}
+
+[data-theme="dark"] .auto-status-pill{
+    border-color:rgba(148,163,184,.35);
+    background:#0f172a;
+    color:#9fb2cc !important;
+}
+
+[data-theme="dark"] .auto-status-pill.is-success{
+    border-color:rgba(96,165,250,.55);
+    background:rgba(30,64,175,.28);
+    color:#bfdbfe !important;
+}
+
+[data-theme="dark"] .auto-status-pill.is-error{
+    border-color:rgba(248,113,113,.55);
+    background:rgba(127,29,29,.35);
+    color:#fecaca !important;
+}
+
+@media(max-width:991px){
+    .vault-automation .row{
+        --bs-gutter-x: .75rem;
+    }
+
+    .auto-actions-cell{
+        flex-direction:column;
+        align-items:stretch;
+    }
+}

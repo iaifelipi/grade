@@ -1,0 +1,225 @@
+/* ======================================================
+   VENDORS
+====================================================== */
+
+/* Vite / npm imports corretos */
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+
+/* ======================================================
+   CORE LAYOUT (GLOBAL)
+====================================================== */
+
+@import "./vault/layout.css";
+@import "./vault/standard-topbar.css";
+
+
+/* ======================================================
+   VAULT MODULES
+====================================================== */
+
+@import "./vault/sources.css";
+@import "./vault/explore.css";
+@import "./vault/automation.css";
+@import "./vault/semantic.css";
+@import "./vault/profile.css";
+@import "./vault/auth.css";
+@import "./vault/columns-admin.css";
+@import "./vault/semantic-taxonomy.css";
+@import "./vault/admin-premium.css";
+
+
+/* ======================================================
+   THEME BASE (global helpers only)
+====================================================== */
+
+/* reset clean */
+body {
+    margin: 0;
+    background: var(--bg);
+    font-family: "Plus Jakarta Sans", "DM Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+}
+
+
+/* auth pages */
+.pixip-auth-card {
+    border-radius: 18px;
+}
+
+
+/* inputs premium */
+.form-control-lg {
+    border-radius: 12px;
+}
+
+/* ======================================================
+   PREMIUM MODALS (GLOBAL)
+====================================================== */
+
+.pixip-modal-premium {
+    border: 1px solid #d4e0ef;
+    border-radius: 18px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top right, rgba(59,130,246,.12), transparent 38%),
+        linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow:
+        0 28px 60px -28px rgba(15,23,42,.45),
+        0 12px 24px -20px rgba(15,23,42,.3);
+}
+
+.pixip-modal-premium .modal-header {
+    border-bottom-color: #dce6f3;
+    background: rgba(255,255,255,.66);
+    backdrop-filter: blur(8px);
+}
+
+.pixip-modal-premium .modal-footer {
+    border-top-color: #dce6f3;
+    background: rgba(248,251,255,.92);
+}
+
+.pixip-modal-premium .modal-title {
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: #0f172a;
+}
+
+[data-theme="dark"] .pixip-modal-premium {
+    border-color: rgba(148,163,184,.26);
+    background:
+        radial-gradient(circle at top right, rgba(56,189,248,.18), transparent 42%),
+        linear-gradient(180deg, rgba(15,23,42,.98) 0%, rgba(9,16,30,.98) 100%);
+    box-shadow:
+        0 30px 64px -26px rgba(0,0,0,.68),
+        0 14px 32px -22px rgba(0,0,0,.55);
+}
+
+[data-theme="dark"] .pixip-modal-premium .modal-header {
+    border-bottom-color: rgba(148,163,184,.22);
+    background: rgba(15,23,42,.58);
+}
+
+[data-theme="dark"] .pixip-modal-premium .modal-footer {
+    border-top-color: rgba(148,163,184,.18);
+    background: rgba(9,16,30,.68);
+}
+
+[data-theme="dark"] .pixip-modal-premium .modal-title {
+    color: #f8fafc;
+}
+
+/* ======================================================
+   ADMIN PLANS (DARK)
+====================================================== */
+[data-theme="dark"] .admin-plans-page h4{
+    color:#f8fafc;
+}
+
+[data-theme="dark"] .admin-plans-page small.text-muted{
+    color:#9fb2cc !important;
+}
+
+[data-theme="dark"] .admin-plans-page .card{
+    background:linear-gradient(180deg, rgba(15,23,42,.98) 0%, rgba(9,16,30,.98) 100%);
+    border:1px solid rgba(148,163,184,.24) !important;
+    box-shadow:0 20px 40px rgba(0,0,0,.5);
+}
+
+[data-theme="dark"] .admin-plans-page .table{
+    --bs-table-color: #dbe7ff;
+    --bs-table-bg: transparent;
+    --bs-table-striped-color: #dbe7ff;
+    --bs-table-striped-bg: rgba(30,41,59,.38);
+    --bs-table-hover-color: #eef4ff;
+    --bs-table-hover-bg: rgba(37,99,235,.14);
+    --bs-table-border-color: rgba(148,163,184,.16);
+}
+
+[data-theme="dark"] .admin-plans-page .table thead.table-light{
+    --bs-table-bg: rgba(15,23,42,.92);
+    --bs-table-color: #9fb2cc;
+}
+
+[data-theme="dark"] .admin-plans-page .text-muted{
+    color:#8fa4c1 !important;
+}
+
+[data-theme="dark"] .admin-plans-page .form-select{
+    background:rgba(2,6,23,.72);
+    border-color:rgba(148,163,184,.24);
+    color:#e2e8f0;
+}
+
+[data-theme="dark"] .admin-plans-page .form-select:focus{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 3px rgba(59,130,246,.2);
+}
+
+[data-theme="dark"] .admin-plans-page .form-select::placeholder{
+    color:#8fa4c1;
+}
+
+[data-theme="dark"] .admin-plans-page .form-select:disabled,
+[data-theme="dark"] .admin-plans-page .btn:disabled{
+    background:rgba(15,23,42,.45);
+    border-color:rgba(100,116,139,.3);
+    color:#7f93af;
+}
+
+[data-theme="dark"] .admin-plans-page .btn-primary:disabled{
+    background:rgba(37,99,235,.45);
+    border-color:rgba(59,130,246,.4);
+    color:#dbe7ff;
+}
+[data-theme="dark"] #downgradeModal .modal-content{
+    background:linear-gradient(180deg, rgba(15,23,42,.98) 0%, rgba(9,16,30,.98) 100%);
+    border:1px solid rgba(148,163,184,.24);
+    color:#dbe7ff;
+    box-shadow:0 28px 54px rgba(0,0,0,.55);
+}
+
+[data-theme="dark"] #downgradeModal .modal-header{
+    border-bottom-color:rgba(148,163,184,.2);
+}
+
+[data-theme="dark"] #downgradeModal .modal-footer{
+    border-top-color:rgba(148,163,184,.16);
+}
+
+[data-theme="dark"] #downgradeModal .modal-title{
+    color:#f8fafc;
+}
+
+[data-theme="dark"] #downgradeModal .btn-outline-secondary{
+    background:rgba(15,23,42,.55);
+    border-color:rgba(148,163,184,.32);
+    color:#dbe7ff;
+}
+
+[data-theme="dark"] #downgradeModal .btn-outline-secondary:hover{
+    background:rgba(30,41,59,.8);
+    border-color:rgba(148,163,184,.48);
+    color:#f8fafc;
+}
+
+[data-theme="dark"] #downgradeModal .btn-danger{
+    background:linear-gradient(135deg, rgba(239,68,68,.7), rgba(249,115,22,.7));
+    border-color:rgba(248,113,113,.55);
+    color:#fff;
+    box-shadow:0 12px 28px rgba(248,113,113,.35);
+}
+
+[data-theme="dark"] #downgradeModal .btn-danger:hover{
+    background:linear-gradient(135deg, rgba(248,113,113,.85), rgba(251,146,60,.85));
+    border-color:rgba(248,113,113,.7);
+    box-shadow:0 16px 32px rgba(248,113,113,.45);
+}
+
+[data-theme="dark"] #downgradeModal .btn-danger:disabled{
+    background:rgba(127,29,29,.4);
+    border-color:rgba(127,29,29,.4);
+    color:#f8dada;
+    box-shadow:none;
+}

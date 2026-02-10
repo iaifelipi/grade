@@ -1,0 +1,88 @@
+.admin-users-page .card,
+.admin-roles-page .card,
+.admin-plans-page .card,
+.semantic-admin .semantic-admin-card,
+.semantic-admin .semantic-admin-hero {
+    border-radius: 16px;
+}
+
+.admin-users-page .badge.bg-light,
+.admin-roles-page .badge.bg-light,
+.admin-plans-page .badge.bg-light {
+    border-color: #dbe7f5 !important;
+}
+
+.admin-users-page .table thead th,
+.admin-roles-page .table thead th,
+.admin-plans-page .table thead th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+[data-theme="dark"] .admin-users-page .card-header,
+[data-theme="dark"] .admin-roles-page .card-header,
+[data-theme="dark"] .admin-plans-page .card-header {
+    background: rgba(15, 23, 42, .42) !important;
+    border-bottom-color: rgba(148, 163, 184, .16) !important;
+}
+
+[data-theme="dark"] .admin-users-page .badge.bg-light,
+[data-theme="dark"] .admin-roles-page .badge.bg-light,
+[data-theme="dark"] .admin-plans-page .badge.bg-light {
+    background: rgba(30, 41, 59, .72) !important;
+    color: #dbe7ff !important;
+    border-color: rgba(148, 163, 184, .3) !important;
+}
+
+[data-theme="dark"] .admin-users-page .badge.bg-dark-subtle,
+[data-theme="dark"] .admin-roles-page .badge.bg-dark-subtle {
+    background: rgba(59, 130, 246, .22) !important;
+    color: #bfdbfe !important;
+    border-color: rgba(96, 165, 250, .35) !important;
+}
+
+[data-theme="dark"] .admin-users-page .form-check-inline,
+[data-theme="dark"] .admin-roles-page .form-check-inline {
+    background: rgba(15, 23, 42, .7) !important;
+    border-color: rgba(148, 163, 184, .28) !important;
+}
+
+[data-theme="dark"] .admin-users-page .form-check-label,
+[data-theme="dark"] .admin-roles-page .form-check-label,
+[data-theme="dark"] .admin-plans-page .fw-semibold {
+    color: #dbe7ff;
+}
+
+[data-theme="dark"] .admin-plans-page .table td .text-muted,
+[data-theme="dark"] .admin-users-page .table td .text-muted,
+[data-theme="dark"] .admin-roles-page .table td .text-muted {
+    color: #9fb2cc !important;
+}
+
+.admin-audit-page code {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    border: 1px solid #dbe7f5;
+    color: #0f172a;
+}
+
+.admin-audit-page .badge.bg-secondary {
+    background: #e2e8f0 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1;
+}
+
+[data-theme="dark"] .admin-audit-page code {
+    background: rgba(30, 41, 59, .85);
+    border-color: rgba(148, 163, 184, .3);
+    color: #dbe7ff;
+}
+
+[data-theme="dark"] .admin-audit-page .badge.bg-secondary {
+    background: rgba(71, 85, 105, .46) !important;
+    color: #dbe7ff !important;
+    border-color: rgba(148, 163, 184, .28);
+}

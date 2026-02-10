@@ -1,0 +1,101 @@
+/* =========================================================
+   PIXIP VAULT — LEADS IMPORT PAGE
+   ========================================================= */
+
+.vault-import-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+}
+
+.vault-import-title{
+    font-size:22px;
+    font-weight:700;
+}
+
+
+/* =========================================================
+   UPLOAD CARD
+   ========================================================= */
+
+.vault-upload-card{
+    background:#fff;
+    padding:24px;
+    border-radius:16px;
+    box-shadow:0 6px 20px rgba(0,0,0,.08);
+    display:flex;
+    gap:12px;
+    align-items:center;
+}
+
+.vault-upload-card input[type="file"]{
+    flex:1;
+}
+
+
+/* =========================================================
+   SOURCES LIST
+   ========================================================= */
+
+.vault-sources-table{
+    margin-top:20px;
+}
+
+.vault-sources-table table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.vault-sources-table th{
+    text-align:left;
+    font-weight:600;
+    font-size:13px;
+    padding:12px;
+    background:#f9fafb;
+}
+
+.vault-sources-table td{
+    padding:10px 12px;
+    border-bottom:1px solid #f1f5f9;
+}
+
+.vault-sources-table tr:hover{
+    background:#f8fafc;
+}
+
+
+/* =========================================================
+   PROGRESS BAR
+   ========================================================= */
+
+.progress{
+    width:100%;
+    height:6px;
+    background:#e5e7eb;
+    border-radius:6px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    background:#6366f1;
+    transition:width .3s;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.badge{
+    padding:4px 8px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.badge-queued{background:#e0e7ff;color:#3730a3}
+.badge-importing{background:#dbeafe;color:#1e40af}
+.badge-done{background:#dcfce7;color:#065f46}
+.badge-failed{background:#fee2e2;color:#7f1d1d}

@@ -1,0 +1,429 @@
+.semantic-admin{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+}
+
+.semantic-admin-hero{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:20px 22px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#f8fafc,#eef2ff);
+    border:1px solid #e2e8f0;
+}
+
+[data-theme="dark"] .semantic-admin-hero{
+    background:linear-gradient(135deg, rgba(15,23,42,.96), rgba(2,6,23,.95));
+    border-color:rgba(148,163,184,.24);
+    box-shadow:0 20px 36px rgba(0,0,0,.45);
+}
+
+.semantic-admin-eyebrow{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.18em;
+    color:#64748b;
+    font-weight:600;
+}
+
+.semantic-admin-title{
+    margin:4px 0 6px;
+    font-size:22px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+[data-theme="dark"] .semantic-admin-title{
+    color:#f8fafc;
+}
+
+.semantic-admin-subtitle{
+    margin:0;
+    color:#475569;
+    max-width:560px;
+    font-size:14px;
+}
+
+[data-theme="dark"] .semantic-admin-subtitle{
+    color:#9fb2cc;
+}
+
+.semantic-admin-actions{
+    display:flex;
+    align-items:center;
+}
+
+.semantic-admin-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:#0f172a;
+    color:#f8fafc;
+    font-size:12px;
+}
+
+[data-theme="dark"] .semantic-admin-badge{
+    background:rgba(30,58,138,.32);
+    border:1px solid rgba(96,165,250,.34);
+    color:#bfdbfe;
+}
+
+.semantic-admin-grid{
+    display:grid;
+    gap:20px;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+}
+
+.semantic-admin-card{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:18px;
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    min-height:320px;
+}
+
+[data-theme="dark"] .semantic-admin-card{
+    background: rgba(15,23,42,.95);
+    border-color: rgba(148,163,184,.2);
+    color:#e5e7eb;
+    box-shadow: 0 20px 40px rgba(0,0,0,.5);
+}
+
+.semantic-admin-card-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.semantic-admin-card-title{
+    font-weight:600;
+    font-size:16px;
+    color:#0f172a;
+}
+
+[data-theme="dark"] .semantic-admin-card-title{
+    color:#f8fafc;
+}
+
+.semantic-admin-card-meta{
+    font-size:12px;
+    color:#64748b;
+}
+
+[data-theme="dark"] .semantic-admin-card-meta{
+    color:#94a3b8;
+}
+
+.semantic-admin-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.semantic-admin-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid #f1f5f9;
+    background:#f8fafc;
+}
+
+[data-theme="dark"] .semantic-admin-row{
+    background: rgba(15,23,42,.8);
+    border-color: rgba(148,163,184,.2);
+}
+
+.semantic-admin-row.is-hidden{
+    display:none;
+}
+
+.semantic-admin-tools{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.semantic-admin-search{
+    position:relative;
+}
+
+.semantic-admin-search i{
+    position:absolute;
+    left:10px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:14px;
+}
+
+[data-theme="dark"] .semantic-admin-search i{
+    color:#64748b;
+}
+
+.semantic-admin-search input{
+    padding-left:30px;
+}
+
+[data-theme="dark"] .semantic-admin-search input{
+    background: rgba(2,6,23,.6);
+    border-color: rgba(148,163,184,.2);
+    color:#e5e7eb;
+}
+
+[data-theme="dark"] .semantic-admin input::placeholder,
+[data-theme="dark"] .semantic-admin textarea::placeholder{
+    color:#8fa4c1;
+}
+
+[data-theme="dark"] .semantic-admin input:disabled,
+[data-theme="dark"] .semantic-admin textarea:disabled,
+[data-theme="dark"] .semantic-admin select:disabled{
+    background:rgba(15,23,42,.45);
+    border-color:rgba(100,116,139,.28);
+    color:#7f93af;
+}
+
+.semantic-admin-quickadd{
+    display:flex;
+    gap:8px;
+}
+
+.semantic-admin-quickadd input{
+    flex:1;
+}
+
+[data-theme="dark"] .semantic-admin-quickadd input{
+    background: rgba(2,6,23,.6);
+    border-color: rgba(148,163,184,.2);
+    color:#e5e7eb;
+}
+
+.semantic-admin-bulkadd{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.semantic-admin-bulkadd textarea{
+    resize:vertical;
+}
+
+[data-theme="dark"] .semantic-admin-bulkadd textarea{
+    background: rgba(2,6,23,.6);
+    border-color: rgba(148,163,184,.2);
+    color:#e5e7eb;
+}
+
+.semantic-admin-bulkadd-actions{
+    display:flex;
+    justify-content:flex-end;
+}
+
+.semantic-admin-bulkbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid #e2e8f0;
+    background:#f1f5f9;
+}
+
+[data-theme="dark"] .semantic-admin-bulkbar{
+    background: rgba(15,23,42,.8);
+    border-color: rgba(148,163,184,.2);
+    color:#e5e7eb;
+}
+
+.semantic-admin-bulkinfo{
+    font-size:12px;
+    color:#0f172a;
+    font-weight:600;
+}
+
+[data-theme="dark"] .semantic-admin-bulkinfo{
+    color:#e5e7eb;
+}
+
+.semantic-admin-bulkactions{
+    display:flex;
+    gap:8px;
+}
+
+.semantic-admin-empty{
+    padding:16px 12px;
+    border-radius:12px;
+    border:1px dashed #e2e8f0;
+    color:#94a3b8;
+    font-size:13px;
+    text-align:center;
+}
+
+[data-theme="dark"] .semantic-admin-empty{
+    border-color: rgba(148,163,184,.2);
+    color:#94a3b8;
+}
+
+.semantic-admin-name{
+    font-size:13px;
+    color:#0f172a;
+    font-weight:500;
+}
+
+[data-theme="dark"] .semantic-admin-name{
+    color:#e2e8f0;
+}
+
+.semantic-admin-label{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+}
+
+.semantic-admin-check{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+}
+
+.semantic-admin-check input{
+    width:16px;
+    height:16px;
+}
+
+.semantic-admin-row-actions{
+    display:flex;
+    gap:8px;
+}
+
+.semantic-admin-delete{
+    margin:0;
+}
+
+.semantic-admin-btn{
+    border-radius:999px;
+    padding:4px 12px;
+}
+
+.semantic-admin-helper{
+    font-size:12px;
+    color:#64748b;
+}
+
+[data-theme="dark"] .semantic-admin-helper{
+    color:#9fb2cc;
+}
+
+.semantic-delete-list{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    font-size:12px;
+    color:#0f172a;
+}
+
+[data-theme="dark"] .semantic-delete-list{
+    background:rgba(15,23,42,.85);
+    border-color:rgba(148,163,184,.24);
+    color:#e2e8f0;
+}
+
+.semantic-delete-group-title{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:#64748b;
+    font-weight:700;
+    margin-bottom:2px;
+}
+
+[data-theme="dark"] .semantic-delete-group-title{
+    color:#9fb2cc;
+}
+
+.semantic-delete-more{
+    font-size:11px;
+    color:#64748b;
+}
+
+[data-theme="dark"] .semantic-delete-more{
+    color:#8fa4c1;
+}
+
+[data-theme="dark"] #semanticTaxonomyModal .modal-content,
+[data-theme="dark"] #semanticDeleteModal .modal-content{
+    background:linear-gradient(180deg, rgba(15,23,42,.98) 0%, rgba(9,16,30,.98) 100%);
+    border:1px solid rgba(148,163,184,.24);
+    color:#dbe7ff;
+    box-shadow:0 28px 54px rgba(0,0,0,.55);
+}
+
+[data-theme="dark"] #semanticTaxonomyModal .modal-header,
+[data-theme="dark"] #semanticDeleteModal .modal-header{
+    border-bottom-color:rgba(148,163,184,.18) !important;
+}
+
+[data-theme="dark"] #semanticTaxonomyModal .modal-footer,
+[data-theme="dark"] #semanticDeleteModal .modal-footer{
+    border-top-color:rgba(148,163,184,.16) !important;
+}
+
+[data-theme="dark"] #semanticTaxonomyModal .form-label{
+    color:#cbd5e1;
+}
+
+[data-theme="dark"] #semanticTaxonomyModal .form-control{
+    background:rgba(2,6,23,.72);
+    border-color:rgba(148,163,184,.24);
+    color:#e2e8f0;
+}
+
+[data-theme="dark"] #semanticTaxonomyModal .text-muted,
+[data-theme="dark"] #semanticDeleteModal .text-muted{
+    color:#9fb2cc !important;
+}
+
+[data-theme="dark"] #semanticTaxonomyModal .btn:disabled,
+[data-theme="dark"] #semanticDeleteModal .btn:disabled{
+    background:rgba(15,23,42,.45);
+    border-color:rgba(100,116,139,.3);
+    color:#7f93af;
+}
+
+[data-theme="dark"] #semanticTaxonomyModal .btn-light,
+[data-theme="dark"] #semanticDeleteModal .btn-light{
+    background:rgba(15,23,42,.55);
+    border-color:rgba(148,163,184,.32);
+    color:#dbe7ff;
+}
+
+@media (max-width: 920px){
+    .semantic-admin-quickadd{
+        flex-direction:column;
+    }
+}
+
+@media (max-width: 720px){
+    .semantic-admin-hero{
+        padding:16px;
+    }
+}

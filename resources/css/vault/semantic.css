@@ -1,0 +1,112 @@
+/* ======================================================
+   PIXIP • SEMANTIC
+   chips + tags + seleção estilo Notion
+====================================================== */
+
+.vault-semantic {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+
+/* ======================================================
+   CARD
+====================================================== */
+
+.semantic-card {
+    background: white;
+    padding: 18px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+
+/* ======================================================
+   CHIP LIST
+====================================================== */
+
+.semantic-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.semantic-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 6px 10px;
+
+    border-radius: 999px;
+
+    background: #eef2ff;
+    color: #4f46e5;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.semantic-chip button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: .6;
+}
+
+.semantic-chip button:hover {
+    opacity: 1;
+}
+
+
+/* ======================================================
+   AUTOCOMPLETE
+====================================================== */
+
+.semantic-input {
+    position: relative;
+}
+
+.semantic-input input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.semantic-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+
+    margin-top: 6px;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.semantic-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.semantic-item:hover {
+    background: #f6f7ff;
+}
+
+
+/* ======================================================
+   ANCHOR PREVIEW
+====================================================== */
+
+.semantic-anchor {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+}
