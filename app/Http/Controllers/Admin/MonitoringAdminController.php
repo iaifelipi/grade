@@ -66,12 +66,12 @@ class MonitoringAdminController extends Controller
         $hasCronScheduleRun = false;
         $cronSample = null;
 
-        $pgrepOutput = @shell_exec('pgrep -af "artisan schedule:work" 2>/dev/null');
+        $pgrepOutput = $this->runShell('pgrep -af "artisan schedule:work" 2>/dev/null');
         if (is_string($pgrepOutput) && trim($pgrepOutput) !== '') {
             $hasScheduleWork = true;
         }
 
-        $crontabOutput = @shell_exec('crontab -l 2>/dev/null');
+        $crontabOutput = $this->runShell('crontab -l 2>/dev/null');
         if (is_string($crontabOutput) && trim($crontabOutput) !== '') {
             $lines = preg_split('/\r?\n/', trim($crontabOutput)) ?: [];
             foreach ($lines as $line) {
@@ -454,7 +454,7 @@ class MonitoringAdminController extends Controller
     private function readDiskFree(string $path): array
     {
         $cmd = 'df -Pk ' . escapeshellarg($path) . ' 2>/dev/null | tail -1';
-        $line = trim((string) @shell_exec($cmd));
+        $line = trim((string) ($this->runShell($cmd) ?? ''));
         if ($line === '') {
             return [];
         }
@@ -478,7 +478,7 @@ class MonitoringAdminController extends Controller
     private function readDiskInode(string $path): array
     {
         $cmd = 'df -Pi ' . escapeshellarg($path) . ' 2>/dev/null | tail -1';
-        $line = trim((string) @shell_exec($cmd));
+        $line = trim((string) ($this->runShell($cmd) ?? ''));
         if ($line === '') {
             return [];
         }
@@ -497,7 +497,7 @@ class MonitoringAdminController extends Controller
     private function readDirSizeKb(string $path): ?int
     {
         $cmd = 'du -sk ' . escapeshellarg($path) . ' 2>/dev/null | cut -f1';
-        $raw = trim((string) @shell_exec($cmd));
+        $raw = trim((string) ($this->runShell($cmd) ?? ''));
         if ($raw === '' || !is_numeric($raw)) {
             return null;
         }
@@ -950,7 +950,7 @@ class MonitoringAdminController extends Controller
         }
 
         $command = 'supervisorctl restart ' . escapeshellarg($program) . ' 2>&1';
-        $output = @shell_exec($command);
+        $output = $this->runShell($command);
         $outputText = is_string($output) ? trim($output) : '';
         $normalized = strtolower($outputText);
 
@@ -1051,5 +1051,15 @@ class MonitoringAdminController extends Controller
             'acknowledged_at' => now()->toIso8601String(),
             'acknowledged_by_user_id' => (int) $user->id,
         ]);
+    }
+
+    private function runShell(string $command): ?string
+    {
+        if (!function_exists('shell_exec')) {
+            return null;
+        }
+
+        $output = @shell_exec($command);
+        return is_string($output) ? $output : null;
     }
 }
