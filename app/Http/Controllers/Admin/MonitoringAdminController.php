@@ -601,8 +601,8 @@ class MonitoringAdminController extends Controller
             $pendingByQueue = DB::table('jobs')
                 ->selectRaw("COALESCE(NULLIF(queue, ''), 'default') as queue, COUNT(*) as total")
                 ->groupBy(DB::raw("COALESCE(NULLIF(queue, ''), 'default')"))
-                ->pluck('total', 'queue')
-                ->map(fn ($count) => (int) $count)
+                ->get()
+                ->mapWithKeys(fn ($row) => [(string) ($row->queue ?? 'default') => (int) ($row->total ?? 0)])
                 ->all();
         }
 
@@ -613,16 +613,16 @@ class MonitoringAdminController extends Controller
                 ->selectRaw("COALESCE(NULLIF(queue, ''), 'default') as queue, COUNT(*) as total")
                 ->where('failed_at', '>=', now()->subDay())
                 ->groupBy(DB::raw("COALESCE(NULLIF(queue, ''), 'default')"))
-                ->pluck('total', 'queue')
-                ->map(fn ($count) => (int) $count)
+                ->get()
+                ->mapWithKeys(fn ($row) => [(string) ($row->queue ?? 'default') => (int) ($row->total ?? 0)])
                 ->all();
 
             $failedByQueue15m = DB::table('failed_jobs')
                 ->selectRaw("COALESCE(NULLIF(queue, ''), 'default') as queue, COUNT(*) as total")
                 ->where('failed_at', '>=', now()->subMinutes(15))
                 ->groupBy(DB::raw("COALESCE(NULLIF(queue, ''), 'default')"))
-                ->pluck('total', 'queue')
-                ->map(fn ($count) => (int) $count)
+                ->get()
+                ->mapWithKeys(fn ($row) => [(string) ($row->queue ?? 'default') => (int) ($row->total ?? 0)])
                 ->all();
         }
         $queueThroughput = $this->queueThroughput($pendingByQueue, $failedByQueue15m);
