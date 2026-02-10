@@ -62,7 +62,6 @@
         const target = trigger.getAttribute('data-auth-switch')
         const routes = {
             login: "{{ route('login') }}",
-            register: "{{ route('register') }}",
             forgot: "{{ route('password.request') }}"
         }
         if(routes[target]){

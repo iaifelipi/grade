@@ -26,3 +26,4 @@ Thumbs.db
 security/
 storage/app/private/
 *.csv
+tmp/deploy/

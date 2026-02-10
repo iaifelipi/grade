@@ -44,8 +44,3 @@
         Entrar
     </button>
 </form>
-
-<div class="pixip-auth-note">
-    Ainda não tem conta?
-    <button type="button" class="pixip-auth-link btn btn-link p-0 align-baseline" data-auth-switch="register">Criar conta</button>
-</div>

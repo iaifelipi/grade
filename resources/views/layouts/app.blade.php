@@ -243,10 +243,6 @@
                             <i class="bi bi-box-arrow-in-right"></i>
                             Entrar
                         </button>
-                        <button type="button" class="pixip-user-item" data-bs-toggle="modal" data-bs-target="#authRegisterModal">
-                            <i class="bi bi-person-plus"></i>
-                            Inscreva-se
-                        </button>
                     </div>
                 @endguest
             </div>
@@ -445,29 +441,6 @@
         </div>
     </div>
 
-    <div class="modal fade" id="authRegisterModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow rounded-4 pixip-auth-modal">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title">Inscreva-se</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body pt-2">
-                    <div class="pixip-auth-modal-shell">
-                        <div class="pixip-auth-modal-brand">
-                            <div class="pixip-auth-logo">PX</div>
-                            <div class="pixip-auth-name">PIXIP</div>
-                            <div class="pixip-auth-tagline">Inteligência operacional para times de dados.</div>
-                        </div>
-                        <div class="pixip-auth-modal-card">
-                            @include('auth.partials.register-form')
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="modal fade" id="authForgotModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow rounded-4 pixip-auth-modal">
@@ -497,23 +470,15 @@
             if(!trigger) return
             const target = trigger.getAttribute('data-auth-switch')
             const loginEl = document.getElementById('authLoginModal')
-            const registerEl = document.getElementById('authRegisterModal')
-            if(!loginEl || !registerEl || !window.bootstrap?.Modal) return
+            if(!loginEl || !window.bootstrap?.Modal) return
             const loginModal = window.bootstrap.Modal.getOrCreateInstance(loginEl)
-            const registerModal = window.bootstrap.Modal.getOrCreateInstance(registerEl)
             const forgotEl = document.getElementById('authForgotModal')
             const forgotModal = forgotEl ? window.bootstrap.Modal.getOrCreateInstance(forgotEl) : null
-            if(target === 'register'){
-                loginModal.hide()
-                forgotModal?.hide()
-                registerModal.show()
-            }else if(target === 'login'){
-                registerModal.hide()
+            if(target === 'login'){
                 forgotModal?.hide()
                 loginModal.show()
             }else if(target === 'forgot'){
                 loginModal.hide()
-                registerModal.hide()
                 forgotModal?.show()
             }
         })
