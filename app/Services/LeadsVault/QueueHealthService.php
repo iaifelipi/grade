@@ -86,7 +86,7 @@ class QueueHealthService
      */
     private function readSupervisorStatuses(): ?array
     {
-        $output = @shell_exec('supervisorctl status grade-imports:* grade-normalize:* grade-extras:* 2>&1');
+        $output = $this->runShell('supervisorctl status grade-imports:* grade-normalize:* grade-extras:* 2>&1');
         if (!is_string($output) || trim($output) === '') {
             return null;
         }
@@ -120,7 +120,7 @@ class QueueHealthService
             return 0;
         }
 
-        $output = @shell_exec('pgrep -af "artisan queue:work database --queue=' . $queue . '" 2>/dev/null');
+        $output = $this->runShell('pgrep -af "artisan queue:work database --queue=' . $queue . '" 2>/dev/null');
         if (!is_string($output) || trim($output) === '') {
             return 0;
         }
@@ -134,5 +134,14 @@ class QueueHealthService
 
         return $count;
     }
-}
 
+    private function runShell(string $command): ?string
+    {
+        if (!function_exists('shell_exec')) {
+            return null;
+        }
+
+        $output = @shell_exec($command);
+        return is_string($output) ? $output : null;
+    }
+}
