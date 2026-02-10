@@ -9,6 +9,8 @@ class QueueHealthService
      */
     public function snapshot(): array
     {
+        $isCronWorkerMode = (string) config('monitoring.queue.worker_mode', 'process') === 'cron';
+
         $queues = [
             'imports' => ['expected' => 2, 'program' => 'grade-imports:'],
             'normalize' => ['expected' => 2, 'program' => 'grade-normalize:'],
@@ -21,7 +23,7 @@ class QueueHealthService
         $messages = [];
 
         foreach ($queues as $queue => $meta) {
-            $expected = (int) $meta['expected'];
+            $expected = $isCronWorkerMode ? 0 : (int) $meta['expected'];
             $programPrefix = (string) $meta['program'];
 
             $statusRows = [];
@@ -35,7 +37,11 @@ class QueueHealthService
 
             if ($supervisorStatuses === null) {
                 $running = $this->countQueueWorkersByProcess($queue);
-                $state = $running >= $expected ? 'RUNNING' : ($running > 0 ? 'DEGRADED' : 'STOPPED');
+                if ($isCronWorkerMode && $running === 0) {
+                    $state = 'IDLE';
+                } else {
+                    $state = $running >= $expected ? 'RUNNING' : ($running > 0 ? 'DEGRADED' : 'STOPPED');
+                }
                 $statusRows = array_fill(0, max(1, $running), $state);
             }
 
@@ -44,9 +50,9 @@ class QueueHealthService
             $stoppedCount = count(array_filter($statusRows, fn (string $s): bool => in_array($s, ['STOPPED', 'FATAL', 'EXITED', 'BACKOFF'], true)));
 
             $queueStatus = 'healthy';
-            if ($stoppedCount > 0 || $runningCount === 0) {
+            if ($stoppedCount > 0 || (!$isCronWorkerMode && $runningCount === 0)) {
                 $queueStatus = 'critical';
-            } elseif ($stoppingCount > 0 || $runningCount < $expected) {
+            } elseif ($stoppingCount > 0 || (!$isCronWorkerMode && $runningCount < $expected)) {
                 $queueStatus = 'warning';
             }
 
