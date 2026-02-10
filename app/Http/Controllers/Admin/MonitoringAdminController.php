@@ -599,10 +599,10 @@ class MonitoringAdminController extends Controller
         $pendingByQueue = [];
         if (Schema::hasTable('jobs')) {
             $pendingByQueue = DB::table('jobs')
-                ->selectRaw("COALESCE(NULLIF(queue, ''), 'default') as queue, COUNT(*) as total")
-                ->groupBy(DB::raw("COALESCE(NULLIF(queue, ''), 'default')"))
+                ->select('queue')
                 ->get()
-                ->mapWithKeys(fn ($row) => [(string) ($row->queue ?? 'default') => (int) ($row->total ?? 0)])
+                ->groupBy(fn ($row) => trim((string) ($row->queue ?? '')) !== '' ? (string) $row->queue : 'default')
+                ->map(fn ($rows) => $rows->count())
                 ->all();
         }
 
@@ -610,19 +610,19 @@ class MonitoringAdminController extends Controller
         $failedByQueue15m = [];
         if (Schema::hasTable('failed_jobs')) {
             $failedByQueue24h = DB::table('failed_jobs')
-                ->selectRaw("COALESCE(NULLIF(queue, ''), 'default') as queue, COUNT(*) as total")
                 ->where('failed_at', '>=', now()->subDay())
-                ->groupBy(DB::raw("COALESCE(NULLIF(queue, ''), 'default')"))
+                ->select('queue')
                 ->get()
-                ->mapWithKeys(fn ($row) => [(string) ($row->queue ?? 'default') => (int) ($row->total ?? 0)])
+                ->groupBy(fn ($row) => trim((string) ($row->queue ?? '')) !== '' ? (string) $row->queue : 'default')
+                ->map(fn ($rows) => $rows->count())
                 ->all();
 
             $failedByQueue15m = DB::table('failed_jobs')
-                ->selectRaw("COALESCE(NULLIF(queue, ''), 'default') as queue, COUNT(*) as total")
                 ->where('failed_at', '>=', now()->subMinutes(15))
-                ->groupBy(DB::raw("COALESCE(NULLIF(queue, ''), 'default')"))
+                ->select('queue')
                 ->get()
-                ->mapWithKeys(fn ($row) => [(string) ($row->queue ?? 'default') => (int) ($row->total ?? 0)])
+                ->groupBy(fn ($row) => trim((string) ($row->queue ?? '')) !== '' ? (string) $row->queue : 'default')
+                ->map(fn ($rows) => $rows->count())
                 ->all();
         }
         $queueThroughput = $this->queueThroughput($pendingByQueue, $failedByQueue15m);
