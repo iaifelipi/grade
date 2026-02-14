@@ -5,6 +5,8 @@ export function createEmptyStateController(options){
         emptyStateMeta,
         emptyStateFiltersSummary,
         emptyStateClearBtn,
+        emptyStateSampleBtn,
+        emptyStateImportBtn,
         search,
         score,
         sourceSelect,
@@ -92,6 +94,24 @@ export function createEmptyStateController(options){
     const updateEmptyState = () => {
         updateEmptyStateCopy()
         updateEmptyStateSummary()
+        updateEmptyStateActions()
+    }
+
+    const updateEmptyStateActions = () => {
+        const locked = currentForceImportGate || !currentHasSources
+        const hasFilters = hasActiveFilters()
+
+        if(emptyStateClearBtn){
+            emptyStateClearBtn.classList.toggle('d-none', locked)
+            emptyStateClearBtn.disabled = !hasFilters
+        }
+        if(emptyStateSampleBtn){
+            emptyStateSampleBtn.classList.remove('d-none')
+            emptyStateSampleBtn.disabled = false
+        }
+        if(emptyStateImportBtn){
+            emptyStateImportBtn.classList.toggle('d-none', !canImportLeads)
+        }
     }
 
     const bindClear = (handler) => {
@@ -108,11 +128,11 @@ export function createEmptyStateController(options){
         updateEmptyStateSummary,
         setForceImportGate(value){
             currentForceImportGate = !!value
-            updateEmptyStateCopy()
+            updateEmptyState()
         },
         setHasSources(value){
             currentHasSources = !!value
-            updateEmptyStateCopy()
+            updateEmptyState()
         },
         bindClear,
         hasActiveFilters

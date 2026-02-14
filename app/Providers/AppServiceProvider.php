@@ -4,13 +4,20 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use App\Models\LeadSource;
 use App\Models\LeadNormalized;
 use App\Policies\LeadSourcePolicy;
 use App\Policies\LeadNormalizedPolicy;
+use App\Services\Security\SecurityAccessEventWriter;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Lockout;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +34,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RedirectIfAuthenticated::redirectUsing(function () {
+            if (Auth::guard('web')->check()) {
+                return route('admin.dashboard');
+            }
+
+            if (Auth::guard('tenant')->check()) {
+                return route('home');
+            }
+
+            return route('home');
+        });
+
         // Use Bootstrap pagination views across the app (prevents Tailwind SVG layout issues).
         Paginator::useBootstrapFive();
 
@@ -83,6 +102,79 @@ class AppServiceProvider extends ServiceProvider
                 $headers,
                 JSON_UNESCAPED_UNICODE
             );
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Security Access Events (app)
+        |--------------------------------------------------------------------------
+        | Minimal baseline signals to feed /admin/security without needing
+        | external providers.
+        */
+        Event::listen(Login::class, function (Login $event): void {
+            $req = request();
+            app(SecurityAccessEventWriter::class)->write([
+                'source' => 'app',
+                'event_type' => 'login_success',
+                'ip_address' => method_exists($req, 'ip') ? $req->ip() : null,
+                'request_path' => method_exists($req, 'path') ? '/' . ltrim((string) $req->path(), '/') : null,
+                'request_method' => method_exists($req, 'method') ? $req->method() : null,
+                'http_status' => null,
+                'user_id' => $event->user?->id,
+                'user_email' => $event->user?->email,
+                'user_agent' => (string) $req->userAgent(),
+                'occurred_at' => now(),
+                'payload_json' => [
+                    'guard' => $event->guard,
+                    'remember' => (bool) ($event->remember ?? false),
+                ],
+            ]);
+        });
+
+        Event::listen(Failed::class, function (Failed $event): void {
+            $req = request();
+            $email = null;
+            $login = null;
+            if (is_array($event->credentials ?? null)) {
+                $email = $event->credentials['email'] ?? null;
+                $login = $event->credentials['login'] ?? ($event->credentials['email'] ?? ($event->credentials['username'] ?? null));
+            }
+            app(SecurityAccessEventWriter::class)->write([
+                'source' => 'app',
+                'event_type' => 'login_failed',
+                'ip_address' => method_exists($req, 'ip') ? $req->ip() : null,
+                'request_path' => method_exists($req, 'path') ? '/' . ltrim((string) $req->path(), '/') : null,
+                'request_method' => method_exists($req, 'method') ? $req->method() : null,
+                'http_status' => null,
+                'user_id' => $event->user?->id,
+                'user_email' => $event->user?->email ?? $email,
+                'user_agent' => (string) $req->userAgent(),
+                'occurred_at' => now(),
+                'payload_json' => [
+                    'guard' => $event->guard,
+                    'has_user' => (bool) ($event->user !== null),
+                    'login' => $login,
+                ],
+            ]);
+        });
+
+        Event::listen(Lockout::class, function (Lockout $event): void {
+            $req = $event->request;
+            app(SecurityAccessEventWriter::class)->write([
+                'source' => 'app',
+                'event_type' => 'login_lockout',
+                'ip_address' => method_exists($req, 'ip') ? $req->ip() : null,
+                'request_path' => method_exists($req, 'path') ? '/' . ltrim((string) $req->path(), '/') : null,
+                'request_method' => method_exists($req, 'method') ? $req->method() : null,
+                'http_status' => 429,
+                'user_id' => null,
+                'user_email' => null,
+                'user_agent' => (string) $req->userAgent(),
+                'occurred_at' => now(),
+                'payload_json' => [
+                    'throttle_key' => method_exists($event, 'throttleKey') ? $event->throttleKey : null,
+                ],
+            ]);
         });
     }
 }

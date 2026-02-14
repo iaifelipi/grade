@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    // Inbound webhooks (optional): allow verifying provider callbacks.
+    'mailwizz' => [
+        'webhook_token' => env('MAILWIZZ_WEBHOOK_TOKEN'),
+    ],
+    'sms_gateway' => [
+        'webhook_token' => env('SMS_GATEWAY_WEBHOOK_TOKEN'),
+    ],
+    'wasender' => [
+        'webhook_token' => env('WASENDER_WEBHOOK_TOKEN'),
+    ],
+
 ];

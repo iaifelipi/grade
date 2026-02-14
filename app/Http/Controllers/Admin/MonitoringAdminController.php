@@ -608,6 +608,44 @@ class MonitoringAdminController extends Controller
         return view('admin.monitoring.index');
     }
 
+    public function performance(Request $request)
+    {
+        $maxEvents = max(20, min((int) $request->integer('limit', 200), 500));
+        $events = $this->readAdminListsPerformanceEvents($maxEvents);
+
+        $screen = trim((string) $request->query('screen', ''));
+        if ($screen !== '') {
+            $events = array_values(array_filter($events, static fn (array $event): bool => (string) ($event['screen'] ?? '') === $screen));
+        }
+
+        $routeFilter = trim((string) $request->query('route', ''));
+        if ($routeFilter !== '') {
+            $events = array_values(array_filter($events, static function (array $event) use ($routeFilter): bool {
+                return str_contains(strtolower((string) ($event['route'] ?? '')), strtolower($routeFilter))
+                    || str_contains(strtolower((string) ($event['path'] ?? '')), strtolower($routeFilter));
+            }));
+        }
+
+        $slowEvents = array_values(array_filter($events, static fn (array $event): bool => (bool) ($event['is_slow'] ?? false)));
+        $routeSummary = $this->buildPerformanceRouteSummary($slowEvents);
+
+        return view('admin.monitoring.performance', [
+            'events' => array_slice($events, 0, 150),
+            'slowEvents' => array_slice($slowEvents, 0, 100),
+            'routeSummary' => $routeSummary,
+            'filters' => [
+                'screen' => $screen,
+                'route' => $routeFilter,
+                'limit' => $maxEvents,
+            ],
+            'totals' => [
+                'events' => count($events),
+                'slow_events' => count($slowEvents),
+                'routes' => count(array_unique(array_map(static fn (array $event): string => (string) ($event['route'] ?: $event['path'] ?: '—'), $events))),
+            ],
+        ]);
+    }
+
     public function health(Request $request, QueueHealthService $queueHealth): JsonResponse
     {
         $thresholds = $this->thresholds();
@@ -1083,5 +1121,194 @@ class MonitoringAdminController extends Controller
 
         $output = @shell_exec($command);
         return is_string($output) ? $output : null;
+    }
+
+    /**
+     * @return array<int,array<string,mixed>>
+     */
+    private function readAdminListsPerformanceEvents(int $maxEvents): array
+    {
+        $files = $this->resolveLaravelLogFiles();
+        $events = [];
+
+        foreach ($files as $filePath) {
+            $lines = $this->readLogTailLines($filePath, 12000, 1572864);
+            foreach (array_reverse($lines) as $line) {
+                $event = $this->parseAdminListsPerformanceLine($line);
+                if ($event === null) {
+                    continue;
+                }
+                $events[] = $event;
+                if (count($events) >= $maxEvents) {
+                    break 2;
+                }
+            }
+        }
+
+        return $events;
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    private function resolveLaravelLogFiles(): array
+    {
+        $paths = glob(storage_path('logs/laravel*.log')) ?: [];
+        if ($paths === []) {
+            $singlePath = (string) config('logging.channels.single.path', storage_path('logs/laravel.log'));
+            if (is_file($singlePath)) {
+                $paths[] = $singlePath;
+            }
+        }
+
+        usort($paths, static function (string $a, string $b): int {
+            return filemtime($b) <=> filemtime($a);
+        });
+
+        return array_values(array_filter($paths, static fn (string $path): bool => is_file($path) && is_readable($path)));
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    private function readLogTailLines(string $path, int $maxLines, int $maxBytes): array
+    {
+        $size = @filesize($path);
+        if (!is_int($size) || $size <= 0) {
+            return [];
+        }
+
+        $handle = @fopen($path, 'rb');
+        if (!$handle) {
+            return [];
+        }
+
+        $readBytes = min($size, max(4096, $maxBytes));
+        $offset = max(0, $size - $readBytes);
+        fseek($handle, $offset);
+        $buffer = (string) stream_get_contents($handle);
+        fclose($handle);
+
+        if ($offset > 0) {
+            $firstBreak = strpos($buffer, "\n");
+            if ($firstBreak !== false) {
+                $buffer = substr($buffer, $firstBreak + 1);
+            }
+        }
+
+        $lines = preg_split('/\r?\n/', $buffer) ?: [];
+        $lines = array_values(array_filter(array_map('trim', $lines), static fn (string $line): bool => $line !== ''));
+        if (count($lines) > $maxLines) {
+            $lines = array_slice($lines, -$maxLines);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    private function parseAdminListsPerformanceLine(string $line): ?array
+    {
+        if (!str_contains($line, 'admin lists performance')) {
+            return null;
+        }
+
+        $isSlow = str_contains($line, 'admin lists performance budget exceeded');
+        if (!$isSlow && !str_contains($line, 'admin lists performance ')) {
+            return null;
+        }
+
+        $timestamp = null;
+        if (preg_match('/^\[([^\]]+)\]/', $line, $matches) === 1) {
+            $timestamp = (string) ($matches[1] ?? null);
+        }
+
+        $level = 'INFO';
+        if (preg_match('/\]\s+[a-zA-Z0-9_-]+\.([A-Z]+)\:/', $line, $matches) === 1) {
+            $level = strtoupper((string) ($matches[1] ?? 'INFO'));
+        }
+
+        $context = [];
+        if (preg_match('/(\{.*\})\s+\[\]\s*$/', $line, $matches) === 1) {
+            $decoded = json_decode((string) $matches[1], true);
+            if (is_array($decoded)) {
+                $context = $decoded;
+            }
+        }
+
+        return [
+            'timestamp' => $timestamp,
+            'level' => $level,
+            'is_slow' => $isSlow || $level === 'WARNING',
+            'screen' => (string) ($context['screen'] ?? ''),
+            'route' => (string) ($context['route'] ?? ''),
+            'path' => (string) ($context['path'] ?? ''),
+            'method' => (string) ($context['method'] ?? ''),
+            'total_ms' => isset($context['total_ms']) ? (float) $context['total_ms'] : 0.0,
+            'query_ms' => isset($context['query_ms']) ? (float) $context['query_ms'] : 0.0,
+            'query_count' => isset($context['query_count']) ? (int) $context['query_count'] : 0,
+            'payload_items' => isset($context['payload_items']) ? (int) $context['payload_items'] : 0,
+            'tenant_uuid' => (string) ($context['tenant_uuid'] ?? ''),
+            'source_id' => isset($context['source_id']) ? (int) $context['source_id'] : null,
+            'budget' => is_array($context['budget'] ?? null) ? $context['budget'] : [],
+        ];
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $events
+     * @return array<int,array<string,mixed>>
+     */
+    private function buildPerformanceRouteSummary(array $events): array
+    {
+        $summary = [];
+        foreach ($events as $event) {
+            $routeKey = (string) ($event['route'] ?? '');
+            if ($routeKey === '') {
+                $routeKey = (string) ($event['path'] ?? '—');
+            }
+
+            if (!isset($summary[$routeKey])) {
+                $summary[$routeKey] = [
+                    'route' => $routeKey,
+                    'screen' => (string) ($event['screen'] ?? ''),
+                    'slow_count' => 0,
+                    'avg_total_ms' => 0.0,
+                    'max_total_ms' => 0.0,
+                    'avg_query_ms' => 0.0,
+                    'max_query_ms' => 0.0,
+                    'avg_query_count' => 0.0,
+                    'last_seen' => null,
+                ];
+            }
+
+            $summary[$routeKey]['slow_count']++;
+            $summary[$routeKey]['avg_total_ms'] += (float) ($event['total_ms'] ?? 0.0);
+            $summary[$routeKey]['avg_query_ms'] += (float) ($event['query_ms'] ?? 0.0);
+            $summary[$routeKey]['avg_query_count'] += (float) ($event['query_count'] ?? 0.0);
+            $summary[$routeKey]['max_total_ms'] = max((float) $summary[$routeKey]['max_total_ms'], (float) ($event['total_ms'] ?? 0.0));
+            $summary[$routeKey]['max_query_ms'] = max((float) $summary[$routeKey]['max_query_ms'], (float) ($event['query_ms'] ?? 0.0));
+            $summary[$routeKey]['last_seen'] = $summary[$routeKey]['last_seen'] ?: (string) ($event['timestamp'] ?? '');
+        }
+
+        foreach ($summary as &$row) {
+            $count = max(1, (int) $row['slow_count']);
+            $row['avg_total_ms'] = round(((float) $row['avg_total_ms']) / $count, 2);
+            $row['avg_query_ms'] = round(((float) $row['avg_query_ms']) / $count, 2);
+            $row['avg_query_count'] = round(((float) $row['avg_query_count']) / $count, 2);
+            $row['max_total_ms'] = round((float) $row['max_total_ms'], 2);
+            $row['max_query_ms'] = round((float) $row['max_query_ms'], 2);
+        }
+        unset($row);
+
+        $rows = array_values($summary);
+        usort($rows, static function (array $a, array $b): int {
+            if ((int) $b['slow_count'] === (int) $a['slow_count']) {
+                return (float) $b['max_total_ms'] <=> (float) $a['max_total_ms'];
+            }
+            return (int) $b['slow_count'] <=> (int) $a['slow_count'];
+        });
+
+        return $rows;
     }
 }

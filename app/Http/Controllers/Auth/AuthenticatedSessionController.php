@@ -43,7 +43,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->put('tenant_uuid', $userTenantUuid);
         }
 
-        $response = redirect()->intended(route('home', absolute: false));
+        $response = redirect()->intended(route('admin.dashboard', absolute: false));
         if ($clearGuestCookie) {
             $response->withCookie(Cookie::forget(GuestIdentityService::COOKIE_NAME));
         }

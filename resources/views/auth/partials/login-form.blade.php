@@ -1,12 +1,4 @@
-<div class="grade-auth-header">
-    <div class="grade-auth-icon">
-        <i class="bi bi-envelope-fill"></i>
-    </div>
-    <div class="grade-auth-title">Bem-vindo de volta</div>
-    <div class="grade-auth-subtitle">Entre com seus dados para continuar</div>
-</div>
-
-<form method="POST" action="{{ route('login') }}" data-auth-form="login">
+<form method="POST" action="{{ route('login') }}" data-auth-form="login" class="grade-auth-compact-form">
     @csrf
     <div class="alert alert-danger d-none" data-auth-errors></div>
     @if ($errors->any())
@@ -19,28 +11,30 @@
         </div>
     @endif
 
-    <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email" name="email" value="{{ old('email') }}" class="form-control" required autofocus>
+    <div class="grade-auth-fields">
+        <label class="grade-auth-field-box">
+            <span class="grade-auth-field-kicker">E-mail ou usuário</span>
+            <input type="text" name="login" value="{{ old('login') }}" class="grade-auth-field-input" required autofocus autocomplete="username">
+        </label>
+
+        <label class="grade-auth-field-box">
+            <span class="grade-auth-field-kicker">Senha</span>
+            <input type="password" name="password" class="grade-auth-field-input" required>
+        </label>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Senha</label>
-        <input type="password" name="password" class="form-control" required>
-    </div>
-
-    <div class="grade-auth-actions">
-        <div class="form-check">
+    <div class="grade-auth-compact-actions">
+        <label class="form-check">
             <input type="checkbox" name="remember" class="form-check-input">
-            <label class="form-check-label">Lembrar</label>
-        </div>
-
+            <span class="form-check-label">Lembrar</span>
+        </label>
         <button type="button" class="grade-auth-link btn btn-link p-0" data-auth-switch="forgot">
             Esqueci a senha
         </button>
     </div>
 
-    <button class="btn btn-primary w-100 mt-4" data-auth-submit>
-        Entrar
-    </button>
+    <div class="grade-auth-compact-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-dark" data-auth-submit>Entrar</button>
+    </div>
 </form>

@@ -46,15 +46,46 @@ class AutomationChannelDispatchService
             ];
         }
 
-        $subjectTemplate = (string) ($config['subject'] ?? config('automation_dispatch.email.default_subject'));
-        $bodyTemplate = (string) ($config['message'] ?? config('automation_dispatch.email.default_message'));
+        $seed = trim((string) ($config['variant_seed'] ?? ''));
+        $leadId = (int) ($lead->id ?? 0);
+
+        $subjectTemplate = $this->pickVariant(
+            variants: $config['subject_variants'] ?? null,
+            fallback: (string) ($config['subject'] ?? config('automation_dispatch.email.default_subject')),
+            seed: $seed,
+            leadId: $leadId,
+        );
+
+        $bodyTemplate = $this->pickVariant(
+            variants: $config['message_variants'] ?? null,
+            fallback: (string) ($config['message'] ?? config('automation_dispatch.email.default_message')),
+            seed: $seed,
+            leadId: $leadId,
+        );
+
         $subject = $this->renderTemplate($subjectTemplate, $lead);
         $body = $this->renderTemplate($bodyTemplate, $lead);
+        $format = Str::lower(trim((string) ($config['format'] ?? 'text')));
+        $fromEmail = trim((string) ($config['from_email'] ?? ''));
+        $fromName = trim((string) ($config['from_name'] ?? ''));
+        $replyTo = trim((string) ($config['reply_to'] ?? ''));
 
         try {
-            Mail::raw($body, static function ($message) use ($to, $subject): void {
+            $send = static function ($message) use ($to, $subject, $fromEmail, $fromName, $replyTo): void {
                 $message->to($to)->subject($subject);
-            });
+                if ($fromEmail !== '') {
+                    $message->from($fromEmail, $fromName !== '' ? $fromName : null);
+                }
+                if ($replyTo !== '') {
+                    $message->replyTo($replyTo);
+                }
+            };
+
+            if ($format === 'html') {
+                Mail::html($body, $send);
+            } else {
+                Mail::raw($body, $send);
+            }
 
             return [
                 'status' => 'success',
@@ -63,6 +94,7 @@ class AutomationChannelDispatchService
                     'mode' => 'mailer',
                     'provider' => (string) config('mail.default', 'smtp'),
                     'to' => $to,
+                    'format' => $format,
                 ],
                 'external_ref' => 'mail_' . Str::uuid()->toString(),
             ];
@@ -88,7 +120,7 @@ class AutomationChannelDispatchService
     {
         $target = $channel === 'sms'
             ? trim((string) ($lead->phone_e164 ?? ''))
-            : trim((string) ($lead->whatsapp_e164 ?? ''));
+            : trim((string) (($lead->whatsapp_e164 ?? '') ?: ($lead->phone_e164 ?? '')));
 
         if ($target === '') {
             return [
@@ -109,7 +141,14 @@ class AutomationChannelDispatchService
             ];
         }
 
-        $messageTemplate = (string) ($config['message'] ?? config("automation_dispatch.{$channel}.default_message"));
+        $seed = trim((string) ($config['variant_seed'] ?? ''));
+        $leadId = (int) ($lead->id ?? 0);
+        $messageTemplate = $this->pickVariant(
+            variants: $config['message_variants'] ?? null,
+            fallback: (string) ($config['message'] ?? config("automation_dispatch.{$channel}.default_message")),
+            seed: $seed,
+            leadId: $leadId,
+        );
         $message = $this->renderTemplate($messageTemplate, $lead);
         $timeout = max(2, min((int) config("automation_dispatch.{$channel}.timeout_seconds", 10), 30));
         $maxAttempts = max(1, (int) config("automation_dispatch.{$channel}.retry_attempts", 3));
@@ -221,13 +260,29 @@ class AutomationChannelDispatchService
     {
         $replacements = [
             '{nome}' => (string) ($lead->name ?? ''),
+            '{name}' => (string) ($lead->name ?? ''),
             '{email}' => (string) ($lead->email ?? ''),
             '{telefone}' => (string) ($lead->phone_e164 ?? ''),
+            '{phone}' => (string) ($lead->phone_e164 ?? ''),
             '{whatsapp}' => (string) ($lead->whatsapp_e164 ?? ''),
             '{id}' => (string) ((int) ($lead->id ?? 0)),
         ];
 
         return trim(strtr($template, $replacements));
+    }
+
+    private function pickVariant(mixed $variants, string $fallback, string $seed, int $leadId): string
+    {
+        if (!is_array($variants)) {
+            return $fallback;
+        }
+        $items = array_values(array_filter(array_map(static fn ($v) => is_string($v) ? trim($v) : '', $variants)));
+        if (!$items) {
+            return $fallback;
+        }
+        $key = ($seed !== '' ? $seed : 'seed') . ':' . (string) $leadId;
+        $idx = (int) (abs((int) crc32($key)) % count($items));
+        return $items[$idx] ?? $items[0];
     }
 
     /**

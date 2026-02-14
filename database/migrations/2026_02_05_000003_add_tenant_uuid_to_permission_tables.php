@@ -9,22 +9,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('roles')) {
-            $hasUnique = DB::select("SHOW INDEX FROM roles WHERE Key_name = 'roles_name_guard_name_unique'");
+        $groupsTable = Schema::hasTable('roles') && !Schema::hasTable('users_groups')
+            ? 'roles'
+            : 'users_groups';
+
+        if (Schema::hasTable($groupsTable)) {
+            $legacyUnique = "{$groupsTable}_name_guard_name_unique";
+            $tenantUnique = "{$groupsTable}_tenant_uuid_name_guard_name_unique";
+
+            $hasUnique = DB::select("SHOW INDEX FROM {$groupsTable} WHERE Key_name = '{$legacyUnique}'");
             if (!empty($hasUnique)) {
-                DB::statement("ALTER TABLE roles DROP INDEX roles_name_guard_name_unique");
+                DB::statement("ALTER TABLE {$groupsTable} DROP INDEX {$legacyUnique}");
             }
 
-            Schema::table('roles', function (Blueprint $table) {
-                if (!Schema::hasColumn('roles', 'tenant_uuid')) {
+            Schema::table($groupsTable, function (Blueprint $table) use ($groupsTable) {
+                if (!Schema::hasColumn($groupsTable, 'tenant_uuid')) {
                     $table->string('tenant_uuid')->nullable()->after('guard_name');
                     $table->index('tenant_uuid');
                 }
             });
 
-            $hasTeamUnique = DB::select("SHOW INDEX FROM roles WHERE Key_name = 'roles_tenant_uuid_name_guard_name_unique'");
+            $hasTeamUnique = DB::select("SHOW INDEX FROM {$groupsTable} WHERE Key_name = '{$tenantUnique}'");
             if (empty($hasTeamUnique)) {
-                DB::statement("ALTER TABLE roles ADD UNIQUE roles_tenant_uuid_name_guard_name_unique (tenant_uuid, name, guard_name)");
+                DB::statement("ALTER TABLE {$groupsTable} ADD UNIQUE {$tenantUnique} (tenant_uuid, name, guard_name)");
             }
         }
 
@@ -46,10 +53,10 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('users') && Schema::hasTable('roles')) {
+        if (Schema::hasTable('users') && Schema::hasTable($groupsTable)) {
             $tenantUuid = DB::table('users')->whereNotNull('tenant_uuid')->value('tenant_uuid');
             if ($tenantUuid) {
-                DB::table('roles')->whereNull('tenant_uuid')->update(['tenant_uuid' => $tenantUuid]);
+                DB::table($groupsTable)->whereNull('tenant_uuid')->update(['tenant_uuid' => $tenantUuid]);
                 if (Schema::hasTable('model_has_roles')) {
                     DB::statement("
                         UPDATE model_has_roles m
@@ -72,6 +79,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        $groupsTable = Schema::hasTable('roles') && !Schema::hasTable('users_groups')
+            ? 'roles'
+            : 'users_groups';
+
         if (Schema::hasTable('model_has_permissions')) {
             Schema::table('model_has_permissions', function (Blueprint $table) {
                 if (Schema::hasColumn('model_has_permissions', 'tenant_uuid')) {
@@ -90,18 +101,24 @@ return new class extends Migration
             });
         }
 
-        if (Schema::hasTable('roles')) {
-            Schema::table('roles', function (Blueprint $table) {
-                if (Schema::hasColumn('roles', 'tenant_uuid')) {
-                    $table->dropUnique(['tenant_uuid', 'name', 'guard_name']);
+        if (Schema::hasTable($groupsTable)) {
+            $tenantUnique = "{$groupsTable}_tenant_uuid_name_guard_name_unique";
+            $legacyUnique = "{$groupsTable}_name_guard_name_unique";
+
+            Schema::table($groupsTable, function (Blueprint $table) use ($groupsTable, $tenantUnique) {
+                if (Schema::hasColumn($groupsTable, 'tenant_uuid')) {
+                    $hasTenantUnique = DB::select("SHOW INDEX FROM {$groupsTable} WHERE Key_name = '{$tenantUnique}'");
+                    if (!empty($hasTenantUnique)) {
+                        DB::statement("ALTER TABLE {$groupsTable} DROP INDEX {$tenantUnique}");
+                    }
                     $table->dropIndex(['tenant_uuid']);
                     $table->dropColumn('tenant_uuid');
                 }
             });
 
-            $hasUnique = DB::select("SHOW INDEX FROM roles WHERE Key_name = 'roles_name_guard_name_unique'");
+            $hasUnique = DB::select("SHOW INDEX FROM {$groupsTable} WHERE Key_name = '{$legacyUnique}'");
             if (empty($hasUnique)) {
-                DB::statement("ALTER TABLE roles ADD UNIQUE roles_name_guard_name_unique (name, guard_name)");
+                DB::statement("ALTER TABLE {$groupsTable} ADD UNIQUE {$legacyUnique} (name, guard_name)");
             }
         }
     }

@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Models\Base\BaseTenantModel;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class LeadNormalized extends BaseTenantModel
 {
     protected $table = 'leads_normalized';
 
     protected $fillable = [
+        'public_uid',
         'tenant_uuid',
         'lead_source_id',
 
@@ -53,4 +56,27 @@ class LeadNormalized extends BaseTenantModel
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $model): void {
+            static $hasPublicUidColumn;
+            if ($hasPublicUidColumn === null) {
+                $hasPublicUidColumn = Schema::hasColumn('leads_normalized', 'public_uid');
+            }
+            if (!$hasPublicUidColumn || !empty($model->public_uid)) {
+                return;
+            }
+            $model->public_uid = static::generateUniquePublicUid();
+        });
+    }
+
+    public static function generateUniquePublicUid(): string
+    {
+        do {
+            $candidate = 'm' . strtolower(Str::random(13));
+        } while (static::withoutGlobalScopes()->where('public_uid', $candidate)->exists());
+
+        return $candidate;
+    }
 }

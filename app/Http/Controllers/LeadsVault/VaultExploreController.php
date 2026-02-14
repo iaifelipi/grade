@@ -9,10 +9,11 @@ use App\Models\ExploreViewPreference;
 use App\Models\LeadOverride;
 use App\Models\LeadNormalized;
 use App\Models\LeadSource;
+use App\Models\Integration;
 use App\Services\GuestAuditService;
 use App\Services\GuestIdentityService;
 use App\Services\LeadDataQualityService;
-use App\Support\Brazil\Cpf;
+use App\Services\LeadsVault\SubscriberUpdateService;
 use App\Support\TenantStorage;
 use App\Services\VaultSemanticService;
 use Illuminate\Http\Request;
@@ -112,6 +113,7 @@ class VaultExploreController extends Controller
         $sourceId = session('explore_source_id');
         $tenantUuid = $this->resolveTenantUuidForSource($sourceId ? (int) $sourceId : null);
         $hasExploreViewPrefs = Schema::hasTable('explore_view_preferences');
+        $hasIntegrations = Schema::hasTable('integrations');
         $sourcesQuery = $isGlobalSuper
             ? LeadSource::withoutGlobalScopes()
             : LeadSource::query()->when($tenantUuid, fn ($q) => $q->where('tenant_uuid', $tenantUuid));
@@ -193,6 +195,29 @@ class VaultExploreController extends Controller
             'hasSources' => $hasSources,
             'forceImportGate' => $forceImportGate,
             'isGuest' => $isGuest,
+            'integrations' => [
+                'mailwizz' => $hasIntegrations ? Integration::query()
+                    ->where('tenant_uuid', 'global')
+                    ->where('provider', 'mailwizz')
+                    ->orderBy('name')
+                    ->get(['id', 'key', 'name'])
+                    ->map(fn ($i) => ['id' => (int) $i->id, 'key' => (string) $i->key, 'name' => (string) $i->name])
+                    ->all() : [],
+                'sms_gateway' => $hasIntegrations ? Integration::query()
+                    ->where('tenant_uuid', 'global')
+                    ->where('provider', 'sms_gateway')
+                    ->orderBy('name')
+                    ->get(['id', 'key', 'name'])
+                    ->map(fn ($i) => ['id' => (int) $i->id, 'key' => (string) $i->key, 'name' => (string) $i->name])
+                    ->all() : [],
+                'wasender' => $hasIntegrations ? Integration::query()
+                    ->where('tenant_uuid', 'global')
+                    ->where('provider', 'wasender')
+                    ->orderBy('name')
+                    ->get(['id', 'key', 'name'])
+                    ->map(fn ($i) => ['id' => (int) $i->id, 'key' => (string) $i->key, 'name' => (string) $i->name])
+                    ->all() : [],
+            ],
         ]);
     }
 
@@ -684,6 +709,9 @@ class VaultExploreController extends Controller
             $this->authorize('viewAny', LeadNormalized::class);
         }
 
+        $withTotal = (bool) $r->boolean('with_total', false);
+        $afterId = (int) $r->input('after_id', 0);
+
         $rawQ     = trim((string) $r->input('q', ''));
         $parsedQ  = $this->parseAdvancedSearchQuery($rawQ);
         $q        = $parsedQ['free_text'] ?? '';
@@ -739,7 +767,8 @@ class VaultExploreController extends Controller
             $sourceId = (int) $parsedQ['source_id'];
         }
 
-        $perPage = max(50, min((int) $r->input('per_page', 200), 500));
+        // Higher max helps listing whole files faster; keep a hard cap for payload/perf safety.
+        $perPage = max(50, min((int) $r->input('per_page', 200), 1000));
 
 
         /* ======================================================
@@ -874,6 +903,10 @@ class VaultExploreController extends Controller
 
         if ($sourceId) $query->where('lead_source_id', $sourceId);
 
+        if ($afterId > 0) {
+            $query->where('id', '<', $afterId);
+        }
+
         /* ======================================================
            IDS (selecionados)
         ====================================================== */
@@ -903,6 +936,24 @@ class VaultExploreController extends Controller
            PAGINAÇÃO
         ====================================================== */
 
+        if ($r->input('export') === 'ids') {
+            $limit = max(1, min((int) $r->input('limit', 5000), 5000));
+            $totalCount = $withTotal ? (int) (clone $query)->count() : null;
+            $ids = (clone $query)
+                ->orderByDesc('id')
+                ->limit($limit)
+                ->pluck('id')
+                ->map(fn ($v) => (int) $v)
+                ->values();
+
+            return response()->json([
+                'ok' => true,
+                'total' => $totalCount,
+                'limit' => (int) $limit,
+                'ids' => $ids,
+            ]);
+        }
+
         if ($r->input('export') === 'csv') {
             return $this->exportCsv(
                 $r,
@@ -912,13 +963,24 @@ class VaultExploreController extends Controller
             );
         }
 
-        $totalCount = (clone $query)->count();
+        $totalCount = $withTotal ? (int) (clone $query)->count() : null;
 
         $rows = $query
             ->orderByDesc('id')
-            ->simplePaginate($perPage);
+            ->limit($perPage + 1)
+            ->get();
 
-        $items = $rows->items();
+        $hasMore = $rows->count() > $perPage;
+        $items = $rows->take($perPage)->all();
+        $nextCursor = null;
+        if ($hasMore) {
+            $last = end($items);
+            $nextCursor = $last ? (int) ($last->id ?? 0) : null;
+            if ($nextCursor <= 0) {
+                $nextCursor = null;
+            }
+        }
+
         if ($sourceId && Schema::hasTable('lead_overrides')) {
             $items = $this->applyOverridesToRows(
                 $items,
@@ -936,13 +998,18 @@ class VaultExploreController extends Controller
 
         return response()->jsonUtf8([
             'rows'      => $items,
-            'next_page' => $rows->nextPageUrl(),
-            'has_more'  => $rows->hasMorePages(),
+            'next_page' => null,
+            'next_cursor' => $nextCursor,
+            'has_more'  => (bool) $hasMore,
             'total'     => $totalCount,
         ]);
     }
 
-    public function saveOverride(Request $request, GuestAuditService $guestAudit)
+    public function saveOverride(
+        Request $request,
+        GuestAuditService $guestAudit,
+        SubscriberUpdateService $subscriberUpdateService
+    )
     {
         $this->authorize('viewAny', LeadNormalized::class);
 
@@ -992,10 +1059,7 @@ class VaultExploreController extends Controller
         $leadId = (int) $data['lead_id'];
         $columnKey = trim((string) $data['column_key']);
         $newValue = array_key_exists('value', $data) ? $data['value'] : null;
-        $normalizedKey = match (strtolower($columnKey)) {
-            'lead', 'name', 'nome' => 'nome',
-            default => $columnKey,
-        };
+        $normalizedKey = $subscriberUpdateService->normalizeOverrideColumnKey($columnKey);
 
         $resolvedSourceId = $this->resolveSourceIdForLead($tenantUuid, (int) $source->id, $leadId);
         if ($resolvedSourceId <= 0) {
@@ -1021,7 +1085,7 @@ class VaultExploreController extends Controller
         }
 
         try {
-            $storedValue = $this->normalizeValueForColumn($normalizedKey, $newValue);
+            $storedValue = $subscriberUpdateService->normalizeValueForColumn($normalizedKey, $newValue);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'ok' => false,
@@ -1029,7 +1093,7 @@ class VaultExploreController extends Controller
             ], 422);
         }
 
-        $baseValue = $this->extractRowValue($lead, $normalizedKey);
+        $baseValue = $subscriberUpdateService->extractBaseValue($lead, $normalizedKey);
         $sourceMeta = LeadSource::query()
             ->where('tenant_uuid', $tenantUuid)
             ->where('id', $sourceId)
@@ -1861,140 +1925,7 @@ class VaultExploreController extends Controller
             return null;
         }
 
-        return match ($columnKey) {
-            'lead', 'name', 'nome' => $row->name,
-            'email' => $row->email,
-            'cpf' => $row->cpf,
-            'phone' => $row->phone_e164,
-            'city' => $row->city,
-            'uf' => $row->uf,
-            'sex' => $row->sex,
-            'score' => $row->score,
-            default => $this->valueFromExtras($row->extras_json, $columnKey),
-        };
-    }
-
-    private function valueFromExtras(mixed $extras, string $columnKey): mixed
-    {
-        if (is_string($extras)) {
-            $decoded = json_decode($extras, true);
-            $extras = is_array($decoded) ? $decoded : [];
-        }
-        if (!is_array($extras)) {
-            return null;
-        }
-        return $extras[$columnKey] ?? null;
-    }
-
-    private function normalizeValueForColumn(string $columnKey, mixed $raw): ?string
-    {
-        $value = $raw !== null ? trim((string) $raw) : null;
-        if ($value === '') {
-            return null;
-        }
-
-        return match ($columnKey) {
-            'lead', 'name', 'nome' => $this->normalizeLeadName($value),
-            'email' => $this->normalizeEmail($value),
-            'cpf' => $this->normalizeCpf($value),
-            'phone' => $this->normalizeBrPhone($value),
-            'city' => $this->normalizeCity($value),
-            'uf' => $this->normalizeUf($value),
-            'sex' => $this->normalizeSex($value),
-            'score' => $this->normalizeScore($value),
-            default => $value,
-        };
-    }
-
-    private function normalizeLeadName(string $value): string
-    {
-        $clean = preg_replace('/\s+/u', ' ', $value) ?? $value;
-        $clean = trim($clean);
-        if ($clean === '') {
-            throw new \InvalidArgumentException('Nome inválido.');
-        }
-        return Str::title(Str::lower($clean));
-    }
-
-    private function normalizeEmail(string $value): string
-    {
-        $email = Str::lower(trim($value));
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new \InvalidArgumentException('Email inválido.');
-        }
-        return $email;
-    }
-
-    private function normalizeCpf(string $value): string
-    {
-        $digits = Cpf::normalize($value);
-        if (!$digits) {
-            throw new \InvalidArgumentException('CPF inválido. Verifique os dígitos informados.');
-        }
-        return $digits;
-    }
-
-    private function normalizeBrPhone(?string $raw): ?string
-    {
-        if ($raw === null || trim($raw) === '') {
-            return null;
-        }
-
-        $digits = preg_replace('/\D+/', '', $raw) ?? '';
-        if ($digits === '') {
-            return null;
-        }
-
-        if (str_starts_with($digits, '0055')) {
-            $digits = substr($digits, 4);
-        } elseif (str_starts_with($digits, '055')) {
-            $digits = substr($digits, 3);
-        } elseif (str_starts_with($digits, '55') && strlen($digits) > 11) {
-            $digits = substr($digits, 2);
-        }
-
-        if (!in_array(strlen($digits), [10, 11], true)) {
-            throw new \InvalidArgumentException('Telefone inválido. Use DDD + número (10 ou 11 dígitos).');
-        }
-
-        return '+55' . $digits;
-    }
-
-    private function normalizeCity(string $value): string
-    {
-        $clean = preg_replace('/\s+/u', ' ', $value) ?? $value;
-        return Str::title(Str::lower(trim($clean)));
-    }
-
-    private function normalizeUf(string $value): string
-    {
-        $uf = Str::upper(trim($value));
-        $uf = preg_replace('/[^A-Z]/', '', $uf) ?? $uf;
-        if (strlen($uf) !== 2) {
-            throw new \InvalidArgumentException('UF inválida. Use 2 letras.');
-        }
-        return $uf;
-    }
-
-    private function normalizeSex(string $value): string
-    {
-        $sex = Str::upper(trim($value));
-        if (!in_array($sex, ['M', 'F'], true)) {
-            throw new \InvalidArgumentException('Sexo inválido. Use apenas M ou F.');
-        }
-        return $sex;
-    }
-
-    private function normalizeScore(string $value): string
-    {
-        if (!is_numeric($value)) {
-            throw new \InvalidArgumentException('Score inválido. Use apenas números.');
-        }
-        $score = (int) round((float) $value);
-        if ($score < 0 || $score > 100) {
-            throw new \InvalidArgumentException('Score deve estar entre 0 e 100.');
-        }
-        return (string) $score;
+        return app(SubscriberUpdateService::class)->extractBaseValue($row, $columnKey);
     }
 
     private function applyOverridesToRows(array $rows, string $tenantUuid, int $sourceId): array
@@ -2014,6 +1945,7 @@ class VaultExploreController extends Controller
             ->get(['lead_id', 'column_key', 'value_text'])
             ->groupBy('lead_id');
 
+        $subscriberUpdateService = app(SubscriberUpdateService::class);
         foreach ($rows as $row) {
             $leadId = (int) ($row->id ?? 0);
             $leadOverrides = $overrides->get($leadId);
@@ -2025,73 +1957,13 @@ class VaultExploreController extends Controller
             foreach ($leadOverrides as $override) {
                 $key = (string) $override->column_key;
                 $value = $override->value_text;
-                $applied = false;
-                switch ($key) {
-                    case 'nome':
-                case 'lead':
-                        $row->name = $value;
-                        $applied = true;
-                        break;
-                    case 'email':
-                        $row->email = $value;
-                        $applied = true;
-                        break;
-                    case 'cpf':
-                        $row->cpf = $value;
-                        $applied = true;
-                        break;
-                    case 'phone':
-                        $row->phone = $value;
-                        $row->phone_e164 = $value;
-                        $applied = true;
-                        break;
-                    case 'city':
-                        $row->city = $value;
-                        $applied = true;
-                        break;
-                    case 'uf':
-                        $row->uf = $value;
-                        $applied = true;
-                        break;
-                    case 'sex':
-                        $row->sex = $value;
-                        $applied = true;
-                        break;
-                    case 'score':
-                        $row->score = is_numeric($value) ? (float) $value : $value;
-                        $applied = true;
-                        break;
-                }
-
-                if (!$applied) {
-                    if ($value === null) {
-                        unset($extras[$key]);
-                    } else {
-                        $extras[$key] = $value;
-                    }
-                }
+                $subscriberUpdateService->applyOverrideToLead($row, $key, $value, $extras);
             }
 
             $row->extras_json = $extras ? json_encode($extras, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) : null;
         }
 
         return $rows;
-    }
-
-    private function extractRowValue(LeadNormalized $lead, string $columnKey): ?string
-    {
-        return match ($columnKey) {
-            'nome' => $lead->name,
-            'lead' => $lead->name,
-            'email' => $lead->email,
-            'cpf' => $lead->cpf,
-            'phone' => $lead->phone_e164,
-            'city' => $lead->city,
-            'uf' => $lead->uf,
-            'sex' => $lead->sex,
-            'score' => $lead->score !== null ? (string) $lead->score : null,
-            default => $this->decodeExtrasJson($lead->extras_json)[$columnKey] ?? null,
-        };
     }
 
     private function decodeExtrasJson(mixed $raw): array
@@ -2278,6 +2150,7 @@ class VaultExploreController extends Controller
             $map[$k][] = $override;
         }
 
+        $subscriberUpdateService = app(SubscriberUpdateService::class);
         foreach ($rows as $row) {
             $k = ((int) ($row->lead_source_id ?? 0)) . ':' . ((int) ($row->id ?? 0));
             $leadOverrides = $map[$k] ?? null;
@@ -2289,51 +2162,7 @@ class VaultExploreController extends Controller
             foreach ($leadOverrides as $override) {
                 $key = (string) $override->column_key;
                 $value = $override->value_text;
-                $applied = false;
-                switch ($key) {
-                    case 'nome':
-                case 'lead':
-                        $row->name = $value;
-                        $applied = true;
-                        break;
-                    case 'email':
-                        $row->email = $value;
-                        $applied = true;
-                        break;
-                    case 'cpf':
-                        $row->cpf = $value;
-                        $applied = true;
-                        break;
-                    case 'phone':
-                        $row->phone = $value;
-                        $row->phone_e164 = $value;
-                        $applied = true;
-                        break;
-                    case 'city':
-                        $row->city = $value;
-                        $applied = true;
-                        break;
-                    case 'uf':
-                        $row->uf = $value;
-                        $applied = true;
-                        break;
-                    case 'sex':
-                        $row->sex = $value;
-                        $applied = true;
-                        break;
-                    case 'score':
-                        $row->score = is_numeric($value) ? (float) $value : $value;
-                        $applied = true;
-                        break;
-                }
-
-                if (!$applied) {
-                    if ($value === null) {
-                        unset($extras[$key]);
-                    } else {
-                        $extras[$key] = $value;
-                    }
-                }
+                $subscriberUpdateService->applyOverrideToLead($row, $key, $value, $extras);
             }
 
             $row->extras_json = $extras ? json_encode($extras, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) : null;

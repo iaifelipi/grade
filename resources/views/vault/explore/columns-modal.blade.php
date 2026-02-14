@@ -1,6 +1,6 @@
 <div class="modal fade" id="columnsModal" tabindex="-1" aria-labelledby="columnsModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-lg columns-modal-lg">
-        <div class="modal-content border-0 shadow rounded-4">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg columns-modal-lg grade-modal-pattern-dialog">
+        <div class="modal-content grade-modal-pattern">
             <div class="modal-header border-0 pb-0">
                 <div class="d-flex flex-column gap-2">
                     <div class="d-flex align-items-center gap-2">
@@ -18,7 +18,6 @@
                         Organize as colunas que aparecem no Explore. Arraste para reordenar.
                     </p>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
 
             <div class="modal-body">
@@ -34,7 +33,7 @@
                     <button
                         type="button"
                         id="columnsSelectAll"
-                        class="btn btn-sm btn-outline-primary"
+                        class="btn btn-outline-primary"
                         data-bs-toggle="tooltip"
                         data-bs-placement="bottom"
                         title="Exibe todas as colunas"
@@ -44,7 +43,7 @@
                     <button
                         type="button"
                         id="columnsResetDefault"
-                        class="btn btn-sm btn-outline-secondary"
+                        class="btn btn-outline-secondary"
                         data-bs-toggle="tooltip"
                         data-bs-placement="bottom"
                         title="Restaura o conjunto padrão de colunas"
@@ -56,7 +55,7 @@
                         <button
                             type="button"
                             id="exploreColumnsEditBtn"
-                            class="btn btn-sm btn-outline-secondary"
+                            class="btn btn-outline-secondary"
                             data-columns-admin-modal="1"
                             data-modal-url="{{ route('explore.columns.modal') }}"
                         >
@@ -69,7 +68,7 @@
             </div>
 
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>

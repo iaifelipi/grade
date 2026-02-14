@@ -1,6 +1,12 @@
 <?php
 
 use App\Services\LeadsVault\OperationalCatalogSyncService;
+use App\Services\Security\CloudflareSecurityService;
+use App\Services\Security\SecurityAccessEventWriter;
+use App\Services\Security\SecurityRiskEvaluatorService;
+use App\Services\Tenants\TenantDeletionService;
+use App\Services\Users\UsernameService;
+use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -9,6 +15,153 @@ use Illuminate\Support\Facades\Schema;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command('security:access:ingest {--minutes=} {--limit=}', function () {
+    $minutes = (int) ($this->option('minutes') ?? config('security_monitoring.risk.window_minutes', 15));
+    $minutes = max(1, $minutes);
+    $limit = (int) ($this->option('limit') ?? config('security_monitoring.cloudflare.ingest_limit', 250));
+    $limit = max(1, $limit);
+
+    /** @var CloudflareSecurityService $cf */
+    $cf = app(CloudflareSecurityService::class);
+    if (!$cf->isEnabled()) {
+        $this->error('Cloudflare nao configurado (CLOUDFLARE_API_TOKEN + CLOUDFLARE_ZONE_ID).');
+        return 2;
+    }
+
+    /** @var SecurityAccessEventWriter $writer */
+    $writer = app(SecurityAccessEventWriter::class);
+    $this->info('Grade • Security access ingest (Cloudflare)');
+    $this->line("Window: {$minutes} min");
+    $this->line("Limit: {$limit}");
+
+    $result = $cf->ingestFirewallEvents($writer, $minutes, $limit);
+
+    $ok = (bool) ($result['ok'] ?? false);
+    $created = (int) ($result['created'] ?? 0);
+    $message = (string) ($result['message'] ?? '');
+
+    $this->newLine();
+    $this->line('ok=' . ($ok ? 'true' : 'false') . ' created=' . $created);
+    if ($message !== '') {
+        $this->line($message);
+    }
+
+    return $ok ? 0 : 1;
+})->purpose('Ingere eventos de firewall do Cloudflare para security_access_events');
+
+Artisan::command('security:access:evaluate {--minutes=}', function () {
+    $minutes = (int) ($this->option('minutes') ?? config('security_monitoring.risk.window_minutes', 15));
+    $minutes = max(1, $minutes);
+
+    /** @var SecurityRiskEvaluatorService $svc */
+    $svc = app(SecurityRiskEvaluatorService::class);
+    $this->info('Grade • Security access evaluate');
+    $this->line("Window: {$minutes} min");
+
+    $result = $svc->evaluate($minutes);
+
+    $ok = (bool) ($result['ok'] ?? false);
+    $upserted = (int) ($result['incidents_upserted'] ?? 0);
+    $message = (string) ($result['message'] ?? '');
+
+    $this->newLine();
+    $this->line('ok=' . ($ok ? 'true' : 'false') . ' incidents_upserted=' . $upserted);
+    if ($message !== '') {
+        $this->line($message);
+    }
+
+    return $ok ? 0 : 1;
+})->purpose('Avalia riscos e upserta incidentes em security_access_incidents');
+
+Artisan::command('security:access:run {--ingest} {--evaluate} {--minutes=} {--limit=}', function () {
+    $doIngest = (bool) $this->option('ingest');
+    $doEvaluate = (bool) $this->option('evaluate');
+    if (!$doIngest && !$doEvaluate) {
+        $doIngest = true;
+        $doEvaluate = true;
+    }
+
+    $minutes = (int) ($this->option('minutes') ?? config('security_monitoring.risk.window_minutes', 15));
+    $minutes = max(1, $minutes);
+    $limit = (int) ($this->option('limit') ?? config('security_monitoring.cloudflare.ingest_limit', 250));
+    $limit = max(1, $limit);
+
+    $this->info('Grade • Security access run');
+    $this->line('Mode: sync (cron-friendly)');
+    $this->line("Window: {$minutes} min");
+    $this->line("Limit: {$limit}");
+
+    $exit = 0;
+
+    if ($doIngest) {
+        $code = Artisan::call('security:access:ingest', [
+            '--minutes' => $minutes,
+            '--limit' => $limit,
+        ]);
+        $exit = max($exit, (int) $code);
+        $this->output->write(Artisan::output());
+    }
+
+    if ($doEvaluate) {
+        $code = Artisan::call('security:access:evaluate', [
+            '--minutes' => $minutes,
+        ]);
+        $exit = max($exit, (int) $code);
+        $this->output->write(Artisan::output());
+    }
+
+    return $exit;
+})->purpose('Executa ingest/evaluate em modo sync (ideal para cron) sem depender de workers');
+
+Artisan::command('security:access:prune {--events-days=} {--actions-days=} {--incidents-days=} {--dry-run}', function () {
+    $dryRun = (bool) $this->option('dry-run');
+
+    $eventsDays = (int) ($this->option('events-days') ?? config('security_monitoring.retention.events_days', 90));
+    $actionsDays = (int) ($this->option('actions-days') ?? config('security_monitoring.retention.actions_days', 180));
+    $incidentsDays = (int) ($this->option('incidents-days') ?? config('security_monitoring.retention.incidents_days', 365));
+
+    $eventsDays = max(1, $eventsDays);
+    $actionsDays = max(1, $actionsDays);
+    $incidentsDays = max(1, $incidentsDays);
+
+    $this->info('Grade • Security access prune');
+    $this->line("Events: {$eventsDays} dias");
+    $this->line("Actions: {$actionsDays} dias");
+    $this->line("Incidents: {$incidentsDays} dias");
+    $this->line($dryRun ? 'Modo: DRY-RUN (sem alterações)' : 'Modo: EXECUÇÃO');
+
+    $summary = [];
+
+    $prune = function (string $table, string $column, int $days) use (&$summary, $dryRun) {
+        if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) {
+            $summary[] = ['table' => $table, 'found' => 0, 'deleted' => 0, 'note' => 'skip'];
+            return;
+        }
+
+        $cutoff = now()->subDays($days);
+        $query = DB::table($table)->where($column, '<', $cutoff);
+        $found = (int) (clone $query)->count();
+        $deleted = 0;
+        if (!$dryRun && $found > 0) {
+            $deleted = (int) $query->delete();
+        }
+
+        $summary[] = ['table' => $table, 'found' => $found, 'deleted' => $deleted, 'note' => 'ok'];
+    };
+
+    $prune('security_access_events', 'occurred_at', $eventsDays);
+    $prune('security_access_actions', 'created_at', $actionsDays);
+    $prune('security_access_incidents', 'last_seen_at', $incidentsDays);
+
+    $this->newLine();
+    $this->table(
+        ['Tabela', 'Encontrados', $dryRun ? 'Simulado' : 'Removidos', 'Nota'],
+        array_map(fn ($r) => [$r['table'], $r['found'], $r['deleted'], $r['note']], $summary)
+    );
+
+    return 0;
+})->purpose('Aplica retencao nas tabelas security_access_* (cron-friendly)');
 
 Artisan::command('leads:sweep-orphans {--tenant=} {--dry-run}', function () {
     $tenant = trim((string) ($this->option('tenant') ?? ''));
@@ -416,6 +569,88 @@ Artisan::command('guest:backfill-storage {--tenant=} {--dry-run}', function () {
     }
 })->purpose('Move paths legados de guest para tenants_guest/{guest_uuid} e atualiza lead_sources.file_path');
 
+Artisan::command('tenants:cleanup-orphans {--force} {--confirm=} {--limit=}', function () {
+    $force = (bool) $this->option('force');
+    $confirm = trim((string) ($this->option('confirm') ?? ''));
+    $limit = (int) ($this->option('limit') ?? 200);
+    $limit = max(1, $limit);
+
+    $dryRun = !$force;
+
+    $this->info('Grade • Tenants cleanup orphans');
+    $this->line($dryRun ? 'Modo: DRY-RUN (sem alterações)' : 'Modo: EXECUÇÃO');
+    $this->line("Limit: {$limit}");
+
+    if (!$dryRun && $confirm !== 'DELETE_ORPHAN_TENANTS') {
+        $this->error('Para executar, use: --force --confirm=DELETE_ORPHAN_TENANTS');
+        return 2;
+    }
+
+    if (!Schema::hasTable('tenants') || !Schema::hasTable('users')) {
+        $this->error('Tabelas tenants/users não encontradas.');
+        return 2;
+    }
+
+    $orphans = DB::table('tenants')
+        ->leftJoin('users', 'users.tenant_uuid', '=', 'tenants.uuid')
+        ->select([
+            'tenants.uuid',
+            'tenants.slug',
+            'tenants.name',
+            'tenants.plan',
+            DB::raw('COUNT(users.id) as users_count'),
+        ])
+        ->groupBy(['tenants.uuid', 'tenants.slug', 'tenants.name', 'tenants.plan'])
+        ->havingRaw('COUNT(users.id) = 0')
+        ->orderBy('tenants.name')
+        ->limit($limit)
+        ->get();
+
+    if ($orphans->isEmpty()) {
+        $this->line('Nenhum tenant órfão encontrado.');
+        return 0;
+    }
+
+    $this->newLine();
+    $this->table(
+        ['UUID', 'Slug', 'Nome', 'Plano', 'Users'],
+        $orphans
+            ->map(fn ($t) => [
+                (string) $t->uuid,
+                (string) ($t->slug ?? ''),
+                (string) ($t->name ?? ''),
+                (string) ($t->plan ?? ''),
+                (int) ($t->users_count ?? 0),
+            ])
+            ->all()
+    );
+
+    if ($dryRun) {
+        $this->newLine();
+        $this->line('DRY-RUN: nada foi removido.');
+        $this->line('Para executar: php artisan tenants:cleanup-orphans --force --confirm=DELETE_ORPHAN_TENANTS');
+        return 0;
+    }
+
+    /** @var TenantDeletionService $svc */
+    $svc = app(TenantDeletionService::class);
+
+    $deleted = 0;
+    foreach ($orphans as $t) {
+        $uuid = trim((string) $t->uuid);
+        if ($uuid === '') {
+            continue;
+        }
+        $result = $svc->deleteTenantAndAllData($uuid);
+        $deleted++;
+        $this->line('deleted=' . $deleted . ' uuid=' . $uuid . ' tenant_deleted=' . (((bool) ($result['tenant_deleted'] ?? false)) ? 'true' : 'false'));
+    }
+
+    $this->newLine();
+    $this->info("Concluído. Tenants órfãos removidos: {$deleted}");
+    return 0;
+})->purpose('Remove tenants sem usuários (dry-run por padrão; exige confirmação forte para executar)');
+
 Artisan::command('vault:sync-operational {--tenant=} {--source_id=} {--lead_id=*} {--limit=0}', function () {
     $tenantUuid = trim((string) ($this->option('tenant') ?? ''));
     $sourceId = (int) ($this->option('source_id') ?? 0);
@@ -452,3 +687,117 @@ Artisan::command('vault:sync-operational {--tenant=} {--source_id=} {--lead_id=*
     $this->info("Registros sincronizados: {$synced}");
     $this->info("Tempo: {$elapsedMs} ms");
 })->purpose('Sincroniza leads_normalized no novo Cadastro Operacional (operational_*)');
+
+Artisan::command('users:backfill-usernames {--tenant=} {--dry-run}', function () {
+    $tenant = trim((string) ($this->option('tenant') ?? ''));
+    $dryRun = (bool) $this->option('dry-run');
+
+    if (!Schema::hasTable('users') || !Schema::hasColumn('users', 'username')) {
+        $this->error('Tabela/coluna users.username não encontrada. Rode as migrations primeiro.');
+        return 2;
+    }
+
+    $q = User::query()
+        ->where(function ($qq) {
+            $qq->whereNull('username')->orWhere('username', '');
+        })
+        ->whereNotNull('email')
+        ->orderBy('id');
+
+    if ($tenant !== '') {
+        $q->where('tenant_uuid', $tenant);
+    }
+
+    $total = (clone $q)->count();
+    $this->info('Grade • Backfill usernames');
+    $this->line($tenant !== '' ? "Tenant: {$tenant}" : 'Tenant: todos');
+    $this->line($dryRun ? 'Modo: DRY-RUN (sem alterações)' : 'Modo: EXECUÇÃO');
+    $this->line("Pendentes: {$total}");
+
+    /** @var UsernameService $svc */
+    $svc = app(UsernameService::class);
+    $updated = 0;
+
+    $q->chunkById(200, function ($users) use (&$updated, $svc, $dryRun) {
+        foreach ($users as $u) {
+            $email = (string) ($u->email ?? '');
+            if ($email === '') {
+                continue;
+            }
+            $username = $svc->generateUniqueFromEmail($email, (int) $u->id);
+            if ($dryRun) {
+                $this->line("id={$u->id} email={$email} -> username={$username}");
+                continue;
+            }
+            $u->username = $username;
+            $u->save();
+            $updated++;
+        }
+    });
+
+    $this->newLine();
+    $this->line('Atualizados: ' . ($dryRun ? '0 (dry-run)' : (string) $updated));
+    return 0;
+})->purpose('Preenche users.username (único global) para usuários existentes, a partir do prefixo do e-mail');
+
+Artisan::command('monetization:compat:cleanup {--dry-run} {--force}', function () {
+    $dryRun = (bool) $this->option('dry-run');
+    $force = (bool) $this->option('force');
+
+    $legacyViews = [
+        'payment_gateways',
+        'currencies',
+        'tax_rates',
+        'price_plans',
+        'promo_codes',
+        'orders',
+    ];
+
+    $this->info('Grade • Monetization compat cleanup');
+    $this->line($dryRun ? 'Modo: DRY-RUN (sem alterações)' : 'Modo: EXECUÇÃO');
+
+    $viewRows = [];
+    foreach ($legacyViews as $name) {
+        $type = DB::table('information_schema.TABLES')
+            ->where('TABLE_SCHEMA', DB::raw('DATABASE()'))
+            ->where('TABLE_NAME', $name)
+            ->value('TABLE_TYPE');
+
+        $viewRows[] = [
+            'name' => $name,
+            'type' => (string) ($type ?? 'missing'),
+        ];
+    }
+
+    $this->table(
+        ['Objeto legado', 'Tipo atual'],
+        array_map(fn ($r) => [$r['name'], $r['type']], $viewRows)
+    );
+
+    $toDrop = collect($viewRows)->filter(fn ($r) => $r['type'] === 'VIEW')->pluck('name')->values()->all();
+    if (!$toDrop) {
+        $this->newLine();
+        $this->info('Nenhuma view legada para remover.');
+        return 0;
+    }
+
+    if (!$dryRun && !$force) {
+        $this->newLine();
+        $this->error('Use --force para remover as views legadas.');
+        return 1;
+    }
+
+    if ($dryRun) {
+        $this->newLine();
+        $this->line('DRY-RUN: views que seriam removidas: ' . implode(', ', $toDrop));
+        return 0;
+    }
+
+    foreach ($toDrop as $view) {
+        DB::statement('DROP VIEW IF EXISTS `' . str_replace('`', '``', $view) . '`');
+    }
+
+    $this->newLine();
+    $this->info('Compatibilidade legada removida com sucesso.');
+    return 0;
+})->purpose('Etapa 3: remove views legadas payment_gateways/currencies/tax_rates/price_plans/promo_codes/orders');

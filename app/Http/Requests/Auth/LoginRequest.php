@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Services\Users\UsernameService;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,14 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        // Backward-compat: older clients may still POST {email, password}.
+        if (!$this->has('login') && $this->has('email')) {
+            $this->merge(['login' => $this->input('email')]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,7 +36,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            // Accepts either email or username.
+            'login' => ['required', 'string', 'max:190'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,11 +51,35 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $login = trim((string) $this->input('login', ''));
+        $password = (string) $this->input('password', '');
+        $remember = $this->boolean('remember');
+
+        $ok = false;
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            $ok = Auth::attempt(['email' => mb_strtolower($login), 'password' => $password], $remember);
+        } else {
+            $username = app(UsernameService::class)->normalize($login);
+            if ($username !== '') {
+                $ok = Auth::attempt(['username' => $username, 'password' => $password], $remember);
+            }
+        }
+
+        if (! $ok) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'login' => trans('auth.failed'),
+            ]);
+        }
+
+        $user = Auth::user();
+        if ($user && method_exists($user, 'isDisabled') && $user->isDisabled()) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'login' => 'Conta desativada. Fale com o administrador.',
             ]);
         }
 
@@ -68,7 +102,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'login' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -80,6 +114,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
 }

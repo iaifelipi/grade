@@ -16,7 +16,7 @@ class Role extends Model
         });
     }
 
-    protected $table = 'roles';
+    protected $table = 'users_groups';
 
     protected $fillable = [
         'name',
@@ -26,12 +26,12 @@ class Role extends Model
 
     public function permissions(): BelongsToMany
     {
-        return $this->belongsToMany(Permission::class, 'role_permission');
+        return $this->belongsToMany(Permission::class, 'users_groups_permission', 'role_id', 'permission_id');
     }
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'user_role');
+        return $this->belongsToMany(User::class, 'users_groups_user', 'role_id', 'user_id');
     }
 
     public function hasPermissionTo(string $permissionName): bool

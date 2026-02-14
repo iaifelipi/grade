@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\GuestIdentityService;
 use App\Services\GuestTenantTransferService;
+use App\Services\Users\UsernameService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,6 +62,7 @@ class RegisteredUserController extends Controller
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
+                'username' => app(UsernameService::class)->generateUniqueFromEmail((string) $request->email),
                 'password' => Hash::make($request->password),
                 'tenant_uuid' => $tenant->uuid,
             ]);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Users\UsernameService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -14,6 +15,40 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $user) {
+            /** @var UsernameService $svc */
+            $svc = app(UsernameService::class);
+
+            $raw = $user->username;
+            if (is_string($raw)) {
+                $raw = trim($raw);
+            }
+
+            if ($raw === null || $raw === '') {
+                $email = (string) ($user->email ?? '');
+                if ($email !== '') {
+                    $user->username = $svc->generateUniqueFromEmail($email);
+                }
+                return;
+            }
+
+            $normalized = $svc->normalize((string) $raw);
+            $user->username = $normalized !== '' ? $normalized : null;
+        });
+
+        static::saving(function (self $user) {
+            if ($user->username === null) {
+                return;
+            }
+            /** @var UsernameService $svc */
+            $svc = app(UsernameService::class);
+            $normalized = $svc->normalize((string) $user->username);
+            $user->username = $normalized !== '' ? $normalized : null;
+        });
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -23,7 +58,9 @@ class User extends Authenticatable
     protected $fillable = [
         'tenant_uuid',
         'name',
+        'username',
         'email',
+        'avatar_path',
         'password',
         'is_super_admin',
         'locale',
@@ -55,6 +92,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'disabled_at' => 'datetime',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
         ];
@@ -79,7 +117,7 @@ class User extends Authenticatable
 
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'user_role');
+        return $this->belongsToMany(Role::class, 'users_groups_user', 'user_id', 'role_id');
     }
 
 
@@ -109,6 +147,11 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return (bool) $this->is_super_admin;
+    }
+
+    public function isDisabled(): bool
+    {
+        return !empty($this->disabled_at);
     }
 
     public function hasRole(string $roleName, ?string $tenantUuid = null): bool

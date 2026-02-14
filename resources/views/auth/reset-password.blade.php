@@ -47,6 +47,6 @@
 </form>
 
 <div class="grade-auth-note">
-    Já tem acesso? <a class="grade-auth-link" href="{{ route('login') }}">Voltar ao login</a>
+    Já tem acesso? <a class="grade-auth-link" href="{{ route('admin.login') }}">Voltar ao login</a>
 </div>
 @endsection

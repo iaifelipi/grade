@@ -120,10 +120,33 @@ class AutomationExecutionService
                 $query = $this->applyAudience($query, is_array($audience) ? $audience : []);
                 $query = $this->applyAudience($query, is_array($context['audience_filter'] ?? null) ? $context['audience_filter'] : []);
 
-                $limit = (int) ($context['limit'] ?? $audience['limit'] ?? 500);
-                $limit = max(1, min(5000, $limit));
+                $limitRaw = (int) ($context['limit'] ?? $audience['limit'] ?? 500);
+                $unlimited = $limitRaw <= 0;
+                $limit = $unlimited ? null : max(1, $limitRaw);
 
-                $leads = $query
+                $chunkSize = (int) (config('automation_dispatch.run.chunk_size', 500) ?: 500);
+                $chunkSize = max(50, min(2000, $chunkSize));
+
+                // Best-effort scheduled_count without forcing COUNT() on big filtered audiences.
+                $scheduledCount = null;
+                if (!$unlimited && $limit !== null) {
+                    $scheduledCount = (int) $limit * (int) $steps->count();
+                } elseif (is_array($audience) && filled($audience['ids'] ?? null) && is_array($audience['ids'])) {
+                    $scheduledCount = (int) count($audience['ids']) * (int) $steps->count();
+                }
+
+                if ($scheduledCount !== null) {
+                    DB::table('automation_runs')
+                        ->where('id', $runId)
+                        ->update([
+                            'scheduled_count' => $scheduledCount,
+                            'updated_at' => now(),
+                        ]);
+                }
+
+                $processedLeads = 0;
+
+                $query
                     ->select([
                         'id',
                         'lead_source_id',
@@ -138,94 +161,116 @@ class AutomationExecutionService
                         'name',
                     ])
                     ->orderBy('id')
-                    ->limit($limit)
-                    ->get();
-
-                $recordMap = DB::table('operational_records')
-                    ->where('tenant_uuid', $tenantUuid)
-                    ->whereIn('legacy_lead_id', $leads->pluck('id')->all())
-                    ->pluck('id', 'legacy_lead_id');
-
-                DB::table('automation_runs')
-                    ->where('id', $runId)
-                    ->update([
-                        'scheduled_count' => (int) $leads->count() * (int) $steps->count(),
-                        'updated_at' => now(),
-                    ]);
-
-                foreach ($leads as $lead) {
-                    foreach ($steps as $step) {
+                    ->chunkById($chunkSize, function ($leads) use (
+                        $tenantUuid,
+                        $runId,
+                        $run,
+                        $flow,
+                        $steps,
+                        &$touchedLeadIds,
+                        &$processedLeads,
+                        $limit,
+                        $unlimited
+                    ) {
                         if ($this->shouldCancelRun($runId, $tenantUuid)) {
-                            break 2;
+                            return false;
                         }
 
-                        $stepConfig = $this->decodeJson($step->config_json) ?? [];
-                        $channel = Str::lower((string) ($step->channel ?? ''));
-                        $idempotencyKey = $this->buildEventIdempotencyKey($tenantUuid, $runId, (int) $step->id, (int) $lead->id, $channel);
-
-                        $reserved = $this->reserveEventSlot(
-                            tenantUuid: $tenantUuid,
-                            flowId: (int) $flow->id,
-                            step: $step,
-                            runId: $runId,
-                            lead: $lead,
-                            idempotencyKey: $idempotencyKey,
-                            payload: [
-                                'step_order' => (int) $step->step_order,
-                                'config' => is_array($stepConfig) ? $stepConfig : new \stdClass(),
-                            ]
-                        );
-
-                        if ($reserved['skip']) {
-                            if ($reserved['status'] === 'success') {
-                                $this->ensureSuccessInteraction(
-                                    tenantUuid: $tenantUuid,
-                                    run: $run,
-                                    flow: $flow,
-                                    step: $step,
-                                    lead: $lead,
-                                    eventId: (int) $reserved['event_id'],
-                                    externalRef: $reserved['external_ref'],
-                                    response: is_array($reserved['response']) ? $reserved['response'] : ['mode' => 'existing_event'],
-                                    recordMap: $recordMap,
-                                    stepConfig: is_array($stepConfig) ? $stepConfig : []
-                                );
-                                $touchedLeadIds[(int) $lead->id] = true;
+                        if (!$unlimited && $limit !== null) {
+                            $remaining = $limit - $processedLeads;
+                            if ($remaining <= 0) {
+                                return false;
                             }
-                            continue;
+                            if ($leads->count() > $remaining) {
+                                $leads = $leads->take($remaining);
+                            }
                         }
 
-                        [$status, $errorMessage, $response, $externalRef] = $this->executeStep(
-                            lead: $lead,
-                            step: $step,
-                            idempotencyKey: $idempotencyKey
-                        );
+                        $leadIds = $leads->pluck('id')->map(fn ($v) => (int) $v)->all();
+                        $recordMap = $leadIds
+                            ? DB::table('operational_records')
+                                ->where('tenant_uuid', $tenantUuid)
+                                ->whereIn('legacy_lead_id', $leadIds)
+                                ->pluck('id', 'legacy_lead_id')
+                            : collect();
 
-                        $this->finalizeEventSlot(
-                            eventId: (int) $reserved['event_id'],
-                            status: $status,
-                            errorMessage: $errorMessage,
-                            response: $response,
-                            externalRef: $status === 'success' ? $externalRef : null
-                        );
+                        foreach ($leads as $lead) {
+                            foreach ($steps as $step) {
+                                if ($this->shouldCancelRun($runId, $tenantUuid)) {
+                                    return false;
+                                }
 
-                        if ($status === 'success') {
-                            $this->ensureSuccessInteraction(
-                                tenantUuid: $tenantUuid,
-                                run: $run,
-                                flow: $flow,
-                                step: $step,
-                                lead: $lead,
-                                eventId: (int) $reserved['event_id'],
-                                externalRef: $externalRef,
-                                response: $response,
-                                recordMap: $recordMap,
-                                stepConfig: is_array($stepConfig) ? $stepConfig : []
-                            );
-                            $touchedLeadIds[(int) $lead->id] = true;
+                                $stepConfig = $this->decodeJson($step->config_json) ?? [];
+                                $channel = Str::lower((string) ($step->channel ?? ''));
+                                $idempotencyKey = $this->buildEventIdempotencyKey($tenantUuid, $runId, (int) $step->id, (int) $lead->id, $channel);
+
+                                $reserved = $this->reserveEventSlot(
+                                    tenantUuid: $tenantUuid,
+                                    flowId: (int) $flow->id,
+                                    step: $step,
+                                    runId: $runId,
+                                    lead: $lead,
+                                    idempotencyKey: $idempotencyKey,
+                                    payload: [
+                                        'step_order' => (int) $step->step_order,
+                                        'config' => is_array($stepConfig) ? $stepConfig : new \stdClass(),
+                                    ]
+                                );
+
+                                if ($reserved['skip']) {
+                                    if ($reserved['status'] === 'success') {
+                                        $this->ensureSuccessInteraction(
+                                            tenantUuid: $tenantUuid,
+                                            run: $run,
+                                            flow: $flow,
+                                            step: $step,
+                                            lead: $lead,
+                                            eventId: (int) $reserved['event_id'],
+                                            externalRef: $reserved['external_ref'],
+                                            response: is_array($reserved['response']) ? $reserved['response'] : ['mode' => 'existing_event'],
+                                            recordMap: $recordMap,
+                                            stepConfig: is_array($stepConfig) ? $stepConfig : []
+                                        );
+                                        $touchedLeadIds[(int) $lead->id] = true;
+                                    }
+                                    continue;
+                                }
+
+                                [$status, $errorMessage, $response, $externalRef] = $this->executeStep(
+                                    lead: $lead,
+                                    step: $step,
+                                    idempotencyKey: $idempotencyKey
+                                );
+
+                                $this->finalizeEventSlot(
+                                    eventId: (int) $reserved['event_id'],
+                                    status: $status,
+                                    errorMessage: $errorMessage,
+                                    response: $response,
+                                    externalRef: $status === 'success' ? $externalRef : null
+                                );
+
+                                if ($status === 'success') {
+                                    $this->ensureSuccessInteraction(
+                                        tenantUuid: $tenantUuid,
+                                        run: $run,
+                                        flow: $flow,
+                                        step: $step,
+                                        lead: $lead,
+                                        eventId: (int) $reserved['event_id'],
+                                        externalRef: $externalRef,
+                                        response: $response,
+                                        recordMap: $recordMap,
+                                        stepConfig: is_array($stepConfig) ? $stepConfig : []
+                                    );
+                                    $touchedLeadIds[(int) $lead->id] = true;
+                                }
+                            }
+                            $processedLeads++;
                         }
-                    }
-                }
+
+                        return true;
+                    }, 'id');
 
                 $stats = $this->loadRunEventStats($tenantUuid, $runId);
 
@@ -294,6 +339,19 @@ class AutomationExecutionService
 
     private function applyAudience($query, array $filter)
     {
+        if (filled($filter['ids'] ?? null)) {
+            $ids = $filter['ids'];
+            if (is_string($ids)) {
+                $ids = array_filter(array_map('intval', preg_split('/\\s*,\\s*/', $ids) ?: []));
+            }
+            if (is_array($ids)) {
+                $ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn ($v) => $v > 0)));
+                if ($ids) {
+                    $query->whereIn('id', $ids);
+                }
+            }
+        }
+
         if (filled($filter['source_id'] ?? null)) {
             $query->where('lead_source_id', (int) $filter['source_id']);
         }
@@ -329,6 +387,109 @@ class AutomationExecutionService
             }
         }
 
+        // Explore filters: match Explore UI without materializing IDs in the browser.
+        if (filled($filter['explore_excluded_ids'] ?? null)) {
+            $ids = $filter['explore_excluded_ids'];
+            if (is_string($ids)) {
+                $ids = array_filter(array_map('intval', preg_split('/\\s*,\\s*/', $ids) ?: []));
+            }
+            if (is_array($ids)) {
+                $ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn ($v) => $v > 0)));
+                if ($ids) {
+                    $query->whereNotIn('id', $ids);
+                }
+            }
+        }
+
+        if (filled($filter['explore_source_id'] ?? null)) {
+            $query->where('lead_source_id', (int) $filter['explore_source_id']);
+        }
+
+        if (filled($filter['explore_min_score'] ?? null)) {
+            $minScore = (int) $filter['explore_min_score'];
+            if ($minScore > 0) {
+                $query->where('score', '>=', $minScore);
+            }
+        }
+
+        if (filled($filter['explore_cities'] ?? null) && is_array($filter['explore_cities'])) {
+            $cities = array_values(array_filter(array_map('strval', $filter['explore_cities'])));
+            if ($cities) {
+                $query->whereIn('city', $cities);
+            }
+        }
+
+        if (filled($filter['explore_states'] ?? null) && is_array($filter['explore_states'])) {
+            $states = array_values(array_filter(array_map('strval', $filter['explore_states'])));
+            if ($states) {
+                $query->whereIn('uf', $states);
+            }
+        }
+
+        if (filled($filter['explore_q'] ?? null)) {
+            $q = trim((string) $filter['explore_q']);
+            if ($q !== '') {
+                $safe = addcslashes($q, '%_');
+                $like = "%{$safe}%";
+                $query->where(function ($w) use ($like) {
+                    $w->where('name', 'like', $like)
+                        ->orWhere('email', 'like', $like)
+                        ->orWhere('cpf', 'like', $like)
+                        ->orWhere('phone_e164', 'like', $like)
+                        ->orWhere('city', 'like', $like)
+                        ->orWhere('uf', 'like', $like)
+                        ->orWhere('extras_json', 'like', $like);
+                });
+            }
+        }
+
+        $exploreSegmentId = (int) ($filter['explore_segment_id'] ?? 0);
+        $exploreNicheId = (int) ($filter['explore_niche_id'] ?? 0);
+        $exploreOriginId = (int) ($filter['explore_origin_id'] ?? 0);
+        if ($exploreSegmentId > 0 || $exploreNicheId > 0 || $exploreOriginId > 0) {
+            // Restrict by semantics of the source (lead_source_semantics) to match Explore filtering.
+            $tenantUuid = (string) ($filter['explore_tenant_uuid'] ?? '');
+            if ($tenantUuid !== '') {
+                $segmentIds = $exploreSegmentId > 0 ? [$exploreSegmentId] : [];
+                $nicheIds = $exploreNicheId > 0 ? [$exploreNicheId] : [];
+                $query->whereIn('lead_source_id', function ($q) use ($tenantUuid, $segmentIds, $nicheIds, $exploreOriginId) {
+                    $q->select('lead_source_id')
+                        ->from('lead_source_semantics')
+                        ->where('tenant_uuid', $tenantUuid);
+
+                    if ($segmentIds) {
+                        $q->where(function ($sq) use ($segmentIds) {
+                            $sq->whereIn('segment_id', $segmentIds)
+                                ->orWhereExists(function ($sub) use ($segmentIds) {
+                                    $sub->selectRaw('1')
+                                        ->from('semantic_locations as sl_segment')
+                                        ->whereColumn('sl_segment.lead_source_semantic_id', 'lead_source_semantics.id')
+                                        ->where('sl_segment.type', 'segment')
+                                        ->whereIn('sl_segment.ref_id', $segmentIds);
+                                });
+                        });
+                    }
+
+                    if ($nicheIds) {
+                        $q->where(function ($sq) use ($nicheIds) {
+                            $sq->whereIn('niche_id', $nicheIds)
+                                ->orWhereExists(function ($sub) use ($nicheIds) {
+                                    $sub->selectRaw('1')
+                                        ->from('semantic_locations as sl_niche')
+                                        ->whereColumn('sl_niche.lead_source_semantic_id', 'lead_source_semantics.id')
+                                        ->where('sl_niche.type', 'niche')
+                                        ->whereIn('sl_niche.ref_id', $nicheIds);
+                                });
+                        });
+                    }
+
+                    if ($exploreOriginId > 0) {
+                        $q->where('origin_id', $exploreOriginId);
+                    }
+                });
+            }
+        }
+
         return $query;
     }
 
@@ -340,19 +501,24 @@ class AutomationExecutionService
         $stepType = Str::lower((string) ($step->step_type ?? 'action'));
         $channel = Str::lower((string) ($step->channel ?? ''));
 
+        $config = $this->decodeJson($step->config_json) ?? [];
+        $ignoreOptin = is_array($config) && !empty($config['ignore_optin']);
+
         if (in_array($stepType, ['wait', 'delay'], true)) {
             return ['skipped', null, ['mode' => 'wait', 'message' => 'Step de espera não executa envio.'], null];
         }
 
         if ($channel !== '') {
-            if ($channel === 'email' && (!$lead->optin_email || !filled($lead->email))) {
-                return ['skipped', 'Lead sem email válido com opt-in.', ['mode' => 'validation'], null];
+            if ($channel === 'email' && ((!$ignoreOptin && !$lead->optin_email) || !filled($lead->email))) {
+                return ['skipped', $ignoreOptin ? 'Lead sem email válido.' : 'Lead sem email válido com opt-in.', ['mode' => 'validation'], null];
             }
-            if ($channel === 'sms' && (!$lead->optin_sms || !filled($lead->phone_e164))) {
-                return ['skipped', 'Lead sem telefone SMS com opt-in.', ['mode' => 'validation'], null];
+            if ($channel === 'sms' && ((!$ignoreOptin && !$lead->optin_sms) || !filled($lead->phone_e164))) {
+                return ['skipped', $ignoreOptin ? 'Lead sem telefone SMS.' : 'Lead sem telefone SMS com opt-in.', ['mode' => 'validation'], null];
             }
-            if ($channel === 'whatsapp' && (!$lead->optin_whatsapp || !filled($lead->whatsapp_e164))) {
-                return ['skipped', 'Lead sem WhatsApp com opt-in.', ['mode' => 'validation'], null];
+            // WhatsApp can use whatsapp_e164 when available, otherwise fallback to phone_e164.
+            $hasWhatsappTarget = filled($lead->whatsapp_e164) || filled($lead->phone_e164);
+            if ($channel === 'whatsapp' && ((!$ignoreOptin && !$lead->optin_whatsapp) || !$hasWhatsappTarget)) {
+                return ['skipped', $ignoreOptin ? 'Lead sem telefone para WhatsApp.' : 'Lead sem WhatsApp com opt-in.', ['mode' => 'validation'], null];
             }
         }
 
@@ -360,7 +526,6 @@ class AutomationExecutionService
             return ['success', null, ['mode' => 'noop_step'], null];
         }
 
-        $config = $this->decodeJson($step->config_json) ?? [];
         $result = $this->dispatchService->dispatch(
             channel: $channel,
             lead: $lead,

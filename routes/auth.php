@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\TenantAuthenticatedSessionController;
+use App\Http\Controllers\Auth\TenantRegisteredUserController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
@@ -10,12 +12,54 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| TENANT AUTH (default public auth)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('guest:tenant')->group(function () {
+    Route::get('register', fn () => redirect()->route('home'))
+        ->name('register');
+
+    Route::post('register', [TenantRegisteredUserController::class, 'store'])
+        ->name('register.store');
+
+    Route::get('login', fn () => redirect()->route('home'))
+        ->name('login');
+
+    Route::post('login', [TenantAuthenticatedSessionController::class, 'store'])
+        ->name('login.store');
+
+    // Legacy compatibility: old tenant login endpoints.
+    Route::get('tenant/login', fn () => redirect()->route('login', status: 301))
+        ->name('tenant.login');
+
+    Route::post('tenant/login', [TenantAuthenticatedSessionController::class, 'store'])
+        ->name('tenant.login.store');
+});
+
+/*
+|--------------------------------------------------------------------------
+| SYSTEM AUTH (web/users) under /admin/*
+|--------------------------------------------------------------------------
+*/
+Route::middleware('guest')->prefix('admin')->name('admin.')->group(function () {
+    Route::get('register', fn () => redirect()->route('admin.login', status: 301))
+        ->name('register');
+
+    Route::post('register', fn () => abort(403, 'Auto cadastro de admin desativado.'))
+        ->name('register.store');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('login', [AuthenticatedSessionController::class, 'store'])
+        ->name('login.store');
 
+});
+
+// Web password reset kept on legacy root paths for compatibility.
+Route::middleware('guest')->group(function () {
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
@@ -50,4 +94,9 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+});
+
+Route::middleware('auth:tenant')->group(function () {
+    Route::post('tenant/logout', [TenantAuthenticatedSessionController::class, 'destroy'])
+        ->name('tenant.logout');
 });

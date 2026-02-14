@@ -16,6 +16,12 @@ class SuperAdminReadOnlyMiddleware
             return $next($request);
         }
 
+        // Admin module remains globally writable for superadmin, except
+        // taxonomy mutations that must respect read-only global mode.
+        if ($request->routeIs('admin.*') && !$request->routeIs('admin.semantic.*')) {
+            return $next($request);
+        }
+
         $isImpersonating = $request->session()->has('impersonate_user_id')
             || app()->bound('impersonated_user');
         if ($isImpersonating) {
@@ -66,8 +72,17 @@ class SuperAdminReadOnlyMiddleware
     private function allowedWriteRoutesForReadOnlyMode(): array
     {
         return [
+            // Superadmin can always update own profile/preferences.
+            'profile.update',
+            'profile.modal.update',
+            'profile.preferences',
             'admin.users.impersonate',
             'admin.impersonate.stop',
+            // Global integrations are system-wide, not tenant data.
+            'admin.integrations.store',
+            'admin.integrations.update',
+            'admin.integrations.destroy',
+            'admin.integrations.test',
             'explore.dataQuality.preview',
             'vault.sources.purgeAll',
             'vault.sources.purgeSelected',

@@ -5,9 +5,9 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Database\Seeders\PlanSeeder;
 use Database\Seeders\GradePermissionSeeder;
 use Database\Seeders\SemanticTaxonomySeeder;
+use Database\Seeders\TenantUserGroupSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -28,9 +28,9 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call([
-            PlanSeeder::class,
             GradePermissionSeeder::class,
             SemanticTaxonomySeeder::class,
+            TenantUserGroupSeeder::class,
         ]);
     }
 }

@@ -3,72 +3,17 @@
 @section('title', 'Admin — Auditoria de Atores')
 @section('page-title', 'Admin')
 
-@section('topbar-tools')
-    <div class="explore-toolbar explore-toolbar--topbar">
-        <div class="explore-toolbar-actions ms-auto">
-            <div class="explore-chip-group">
-                <div class="explore-filter-inline">
-                    <div class="source-combo">
-                        <div class="source-select-wrap">
-                            <select id="auditSourceSelect" class="form-select">
-                                <option value="">Todos os arquivos</option>
-                                @foreach($topbarSources as $source)
-                                    <option value="{{ $source->id }}" @selected((int) $currentSourceId === (int) $source->id)>
-                                        {{ $source->original_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <a
-                            href="{{ route('home') }}"
-                            class="btn btn-primary explore-add-source-btn"
-                            title="Abrir Explore"
-                            aria-label="Abrir Explore"
-                        >
-                            <i class="bi bi-plus-lg"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="explore-filter-dropdown dropdown">
-                    <button
-                        class="btn btn-outline-secondary dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                    >
-                        Filtros
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end explore-filter-menu p-3">
-                        <label class="form-label small text-muted">Arquivo</label>
-                        <select id="auditSourceSelectMobile" class="form-select mb-2">
-                            <option value="">Todos os arquivos</option>
-                            @foreach($topbarSources as $source)
-                                <option value="{{ $source->id }}" @selected((int) $currentSourceId === (int) $source->id)>
-                                    {{ $source->original_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-@endsection
-
 @section('content')
 @php
     $eventsTotal = method_exists($events, 'total') ? (int) $events->total() : (int) $events->count();
     $sessionsTotal = method_exists($sessions, 'total') ? (int) $sessions->total() : (int) $sessions->count();
     $accessTotal = method_exists($accessLogs, 'total') ? (int) $accessLogs->total() : (int) $accessLogs->count();
 @endphp
-<div class="container-fluid py-4 admin-audit-page">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <div>
-            <h2 class="h5 mb-1">Auditoria de atores (Guest e Usuário)</h2>
-            <div class="text-muted small">Sessões, eventos de arquivo e acessos a dados sensíveis.</div>
-        </div>
-    </div>
+<div class="admin-audit-page">
+    <x-admin.page-header
+        title="Auditoria de atores (Guest e Usuário)"
+        subtitle="Sessões, eventos de arquivo e acessos a dados sensíveis."
+    />
 
     @php
         $baseFilters = request()->except(['actor_type', 'events_page', 'sessions_page', 'access_page']);

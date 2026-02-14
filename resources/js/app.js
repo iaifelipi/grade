@@ -121,6 +121,15 @@ async function boot(){
         return
     }
 
+    /* -----------------------------------------
+       SECURITY ACCESS (admin)
+    ----------------------------------------- */
+    if (has('securityAccessPage')) {
+        const { default: initSecurityAccessPage } = await import('./admin/security-access')
+        initSecurityAccessPage()
+        return
+    }
+
     initProfile()
     initPlanAdmin()
 
@@ -173,9 +182,313 @@ function initTopbar(){
     const CONFIG_RAIL_STORAGE_KEY = 'grade.config.rail.open'
     const LANG_STORAGE_KEY = 'grade.language'
 
-    const syncConfigRailOffset = ()=>{
-        if(!topbar) return
-        const rect = topbar.getBoundingClientRect()
+	    const initSettingsModal = ()=>{
+	        const modalEl = document.getElementById('gradeSettingsModal')
+	        if(!modalEl) return
+
+	        const navItems = Array.from(modalEl.querySelectorAll('[data-settings-tab]'))
+	        const panels = Array.from(modalEl.querySelectorAll('[data-settings-panel]'))
+	        if(!navItems.length || !panels.length) return
+
+	        const setActive = (tab)=>{
+	            navItems.forEach((btn)=>btn.classList.toggle('is-active', btn.getAttribute('data-settings-tab') === tab))
+	            panels.forEach((p)=>p.classList.toggle('is-active', p.getAttribute('data-settings-panel') === tab))
+	        }
+
+        navItems.forEach((btn)=>{
+            btn.addEventListener('click', ()=>{
+                setActive(btn.getAttribute('data-settings-tab'))
+            })
+        })
+
+	        modalEl.addEventListener('shown.bs.modal', ()=>{
+	            // Default to General, but allow external anchors to open a specific tab.
+	            const desired = modalEl.dataset?.openTab || 'general'
+	            setActive(desired)
+	            if(modalEl.dataset) delete modalEl.dataset.openTab
+	        })
+
+	        // Anchors outside the modal can request a specific tab before opening.
+	        document.addEventListener('click', (event)=>{
+	            const btn = event.target.closest?.('[data-settings-open-tab]')
+	            if(!btn) return
+	            const tab = btn.getAttribute('data-settings-open-tab') || 'general'
+	            modalEl.dataset.openTab = tab
+	        })
+
+	        modalEl.querySelectorAll('[data-settings-open-modal]').forEach((btn)=>{
+	            btn.addEventListener('click', ()=>{
+	                const target = btn.getAttribute('data-settings-open-modal')
+	                if(!target || !window.bootstrap?.Modal) return
+	                const targetEl = document.querySelector(target)
+                if(!targetEl) return
+                // Close settings first to avoid stacked modals.
+                window.bootstrap.Modal.getOrCreateInstance(modalEl).hide()
+                setTimeout(()=>{
+                    window.bootstrap.Modal.getOrCreateInstance(targetEl).show()
+                }, 250)
+            })
+        })
+	    }
+
+	    const initEditProfileModal = ()=>{
+	        const modalEl = document.getElementById('editProfileModal')
+	        if(!modalEl) return
+
+	        const form = modalEl.querySelector('#editProfileForm')
+	        const btn = modalEl.querySelector('#editProfileAvatarBtn')
+	        const input = modalEl.querySelector('#editProfileAvatarInput')
+	        const preview = modalEl.querySelector('#editProfileAvatarPreview')
+	        const submitBtn = modalEl.querySelector('#editProfileSubmitBtn')
+	        if(!btn || !input || !preview || !form || !submitBtn) return
+
+	        const renderAvatarNode = (container, avatarUrl, initials)=>{
+	            if(!container) return
+	            if(avatarUrl){
+	                container.innerHTML = ''
+	                const img = document.createElement('img')
+	                img.src = avatarUrl
+	                img.alt = ''
+	                container.appendChild(img)
+	                container.classList.add('avatar-has-image')
+	                return
+	            }
+	            container.classList.remove('avatar-has-image')
+	            container.textContent = initials || 'U'
+	        }
+
+	        const avatarContainers = ()=> Array.from(document.querySelectorAll('.grade-user-avatar, .grade-user-profile-avatar, .grade-edit-profile-avatar'))
+
+	        const setAvatarRingColor = (color)=>{
+	            avatarContainers().forEach((el)=>{
+	                if(color){
+	                    el.style.setProperty('--avatar-ring-color', color)
+	                }else{
+	                    el.style.removeProperty('--avatar-ring-color')
+	                }
+	            })
+	        }
+
+	        const syncAvatarImageClasses = ()=>{
+	            avatarContainers().forEach((el)=>{
+	                const hasImage = !!el.querySelector('img')
+	                el.classList.toggle('avatar-has-image', hasImage)
+	            })
+	        }
+
+	        const pickDominantColor = (img)=>{
+	            try{
+	                const w = 18
+	                const h = 18
+	                const canvas = document.createElement('canvas')
+	                canvas.width = w
+	                canvas.height = h
+	                const ctx = canvas.getContext('2d', { willReadFrequently: true })
+	                if(!ctx) return null
+	                ctx.drawImage(img, 0, 0, w, h)
+	                const { data } = ctx.getImageData(0, 0, w, h)
+
+	                let r = 0, g = 0, b = 0, c = 0
+	                for(let i = 0; i < data.length; i += 4){
+	                    const a = data[i + 3]
+	                    if(a < 30) continue
+	                    r += data[i]
+	                    g += data[i + 1]
+	                    b += data[i + 2]
+	                    c++
+	                }
+	                if(!c) return null
+
+	                r = Math.round(r / c)
+	                g = Math.round(g / c)
+	                b = Math.round(b / c)
+
+	                // Boost color a bit so the ring remains visible/minimal.
+	                const gray = Math.round((r + g + b) / 3)
+	                r = Math.max(0, Math.min(255, Math.round(r + (r - gray) * 0.35)))
+	                g = Math.max(0, Math.min(255, Math.round(g + (g - gray) * 0.35)))
+	                b = Math.max(0, Math.min(255, Math.round(b + (b - gray) * 0.35)))
+
+	                return `rgb(${r}, ${g}, ${b})`
+	            }catch(_e){
+	                return null
+	            }
+	        }
+
+	        const applyRingFromImage = (img)=>{
+	            if(!img) return
+	            const apply = ()=>{
+	                const color = pickDominantColor(img)
+	                if(color) setAvatarRingColor(color)
+	            }
+	            if(img.complete){
+	                apply()
+	            }else{
+	                img.addEventListener('load', apply, { once: true })
+	            }
+	        }
+
+	        btn.addEventListener('click', ()=> input.click())
+	        preview.addEventListener('click', ()=> input.click())
+	        syncAvatarImageClasses()
+
+	        input.addEventListener('change', ()=>{
+	            const file = input.files?.[0]
+	            if(!file) return
+	            if(!file.type?.startsWith('image/')) return
+
+	            const url = URL.createObjectURL(file)
+	            preview.innerHTML = ''
+	            const img = document.createElement('img')
+	            img.src = url
+	            img.alt = ''
+	            preview.appendChild(img)
+	            applyRingFromImage(img)
+	        })
+
+	        // On open, sync ring color with current avatar.
+	        modalEl.addEventListener('shown.bs.modal', ()=>{
+	            const img = preview.querySelector('img')
+	                || document.querySelector('.grade-user-profile-avatar img')
+	                || document.querySelector('.grade-user-avatar img')
+	            applyRingFromImage(img)
+	        })
+
+	        form.addEventListener('submit', async (event)=>{
+	            event.preventDefault()
+
+	            const fd = new FormData(form)
+	            submitBtn.disabled = true
+	            submitBtn.classList.add('is-submitting')
+	            let saved = false
+
+	            try{
+	                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+	                const res = await fetch(form.action, {
+	                    method: 'POST',
+	                    headers: {
+	                        'X-Requested-With': 'XMLHttpRequest',
+	                        'Accept': 'application/json',
+	                        'X-CSRF-TOKEN': csrf
+	                    },
+	                    body: fd
+	                })
+
+	                if(!res.ok){
+	                    const payload = await res.json().catch(()=>null)
+	                    return
+	                }
+
+	                const payload = await res.json()
+	                const user = payload?.user || {}
+	                const name = user?.name || ''
+	                const handle = user?.handle || ''
+	                const avatarUrl = user?.avatar_url || ''
+	                const initials = user?.initials || 'U'
+
+	                document.querySelectorAll('.grade-user-profile-name').forEach((el)=>{ el.textContent = name })
+	                document.querySelectorAll('.grade-user-profile-handle').forEach((el)=>{ el.textContent = handle })
+	                document.querySelectorAll('.grade-user-avatar').forEach((el)=> renderAvatarNode(el, avatarUrl, initials))
+	                document.querySelectorAll('.grade-user-profile-avatar').forEach((el)=> renderAvatarNode(el, avatarUrl, initials))
+	                renderAvatarNode(preview, avatarUrl, initials)
+	                const mainImg = preview.querySelector('img')
+	                    || document.querySelector('.grade-user-profile-avatar img')
+	                    || document.querySelector('.grade-user-avatar img')
+	                syncAvatarImageClasses()
+	                applyRingFromImage(mainImg)
+	                saved = true
+
+	                if(window.bootstrap?.Modal){
+	                    setTimeout(()=>{
+	                        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide()
+	                        submitBtn.disabled = false
+	                        submitBtn.classList.remove('is-submitting')
+	                    }, 2000)
+	                }
+	            }catch(_e){
+	            } finally{
+	                if(!saved){
+	                    submitBtn.disabled = false
+	                    submitBtn.classList.remove('is-submitting')
+	                }
+	            }
+	        })
+	    }
+
+	    const initBrandModal = ()=>{
+	        const modalEl = document.getElementById('gradeBrandModal')
+	        if(!modalEl || !window.bootstrap?.Modal) return
+	        const BRAND_SEEN_KEY = 'grade.brand.modal.seen'
+	        const links = Array.from(document.querySelectorAll('[data-brand-link]'))
+	        if(!links.length) return
+	        let singleClickTimer = null
+
+	        const openModal = ()=>{
+	            window.bootstrap.Modal.getOrCreateInstance(modalEl).show()
+	            try { localStorage.setItem(BRAND_SEEN_KEY, '1') } catch(_e) {}
+	        }
+
+	        const isHome = ()=> window.location.pathname === '/'
+
+	        const goHome = (withBrand = false)=>{
+	            const url = withBrand ? '/?brand=1' : '/'
+	            window.location.href = url
+	        }
+
+	        const hasSeen = ()=>{
+	            try { return localStorage.getItem(BRAND_SEEN_KEY) === '1' } catch(_e) { return false }
+	        }
+
+	        const openOrRedirectModal = ()=>{
+	            if(isHome()){
+	                openModal()
+	            }else{
+	                goHome(true)
+	            }
+	        }
+
+	        const params = new URLSearchParams(window.location.search || '')
+	        if(params.get('brand') === '1'){
+	            setTimeout(openModal, 80)
+	            params.delete('brand')
+	            const qs = params.toString()
+	            const cleanUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash || ''}`
+	            window.history.replaceState({}, '', cleanUrl)
+	        }
+
+	        links.forEach((link)=>{
+	            link.addEventListener('click', (event)=>{
+	                event.preventDefault()
+	                const seen = hasSeen()
+
+	                // First ever click opens modal.
+	                if(!seen){
+	                    openOrRedirectModal()
+	                    return
+	                }
+
+	                // Single click after first time only redirects.
+	                clearTimeout(singleClickTimer)
+	                singleClickTimer = setTimeout(()=>{
+	                    goHome(false)
+	                }, 320)
+	            })
+
+	            link.addEventListener('dblclick', (event)=>{
+	                event.preventDefault()
+	                clearTimeout(singleClickTimer)
+	                openOrRedirectModal()
+	            })
+	        })
+	    }
+
+	    initSettingsModal()
+	    initEditProfileModal()
+	    initBrandModal()
+
+	    const syncConfigRailOffset = ()=>{
+	        if(!topbar) return
+	        const rect = topbar.getBoundingClientRect()
         const top = Math.max(0, Math.ceil(rect.bottom + 10))
         document.body?.style.setProperty('--config-rail-top', `${top}px`)
     }
@@ -198,6 +511,11 @@ function initTopbar(){
     }
 
     if(userBtn && userMenu){
+        const closeUserMenu = ()=>{
+            userMenu.classList.remove('is-open')
+            userBtn.setAttribute('aria-expanded', 'false')
+        }
+
         userBtn.addEventListener('click', (e)=>{
             e.stopPropagation()
             const open = userMenu.classList.toggle('is-open')
@@ -209,9 +527,13 @@ function initTopbar(){
         })
 
         document.addEventListener('click', ()=>{
-            userMenu.classList.remove('is-open')
-            userBtn.setAttribute('aria-expanded', 'false')
+            closeUserMenu()
         })
+
+        const logoutConfirmModal = document.getElementById('logoutConfirmModal')
+        if(logoutConfirmModal){
+            logoutConfirmModal.addEventListener('show.bs.modal', closeUserMenu)
+        }
     }
 
     if(userThemeToggle){

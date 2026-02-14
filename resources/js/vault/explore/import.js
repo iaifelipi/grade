@@ -62,6 +62,14 @@ export function createImportController(options){
     let importLastRows = []
     const selectedSourceIds = new Set()
     let importModalMode = 'upload'
+    const IMPORT_SUBMIT_LABEL = 'Importar'
+
+    const setImportSubmitBusy = (busy)=>{
+        if(!exploreImportSubmitBtn) return
+        exploreImportSubmitBtn.disabled = !!busy
+        exploreImportSubmitBtn.textContent = IMPORT_SUBMIT_LABEL
+        exploreImportSubmitBtn.classList.toggle('is-submitting', !!busy)
+    }
 
     const filterAllowedImportFiles = (files)=>{
         const allow = new Set(['csv','xlsx','txt'])
@@ -487,6 +495,7 @@ export function createImportController(options){
                 }
                 if(trackedImportsAllDone(rows)){
                     importFinished = true
+                    setImportSubmitBusy(false)
                 }
             }else{
                 let trackedRows = []
@@ -523,6 +532,7 @@ export function createImportController(options){
 
                 if(trackedImportsAllDone(rows)){
                     importFinished = true
+                    setImportSubmitBusy(false)
                     stopImportPolling()
                     startImportAutoCloseCountdown()
                     await loadSources?.()
@@ -626,8 +636,7 @@ export function createImportController(options){
 
         if(exploreSourcesPurgeConfirmBtn){
             exploreSourcesPurgeConfirmBtn.disabled = true
-            exploreSourcesPurgeConfirmBtn.textContent = 'Excluindo...'
-            exploreSourcesPurgeConfirmBtn.classList.add('explore-busy-btn')
+            exploreSourcesPurgeConfirmBtn.classList.add('is-submitting')
         }
 
         updatePurgeProgress()
@@ -682,8 +691,7 @@ export function createImportController(options){
         }finally{
             if(exploreSourcesPurgeConfirmBtn){
                 exploreSourcesPurgeConfirmBtn.disabled = false
-                exploreSourcesPurgeConfirmBtn.textContent = 'Excluir'
-                exploreSourcesPurgeConfirmBtn.classList.remove('explore-busy-btn')
+                exploreSourcesPurgeConfirmBtn.classList.remove('is-submitting')
             }
             if(exploreSourcesPurgeProgressWrap){
                 exploreSourcesPurgeProgressWrap.classList.add('d-none')
@@ -720,9 +728,7 @@ export function createImportController(options){
         stopImportPolling()
         stopImportAutoCloseCountdown()
         if(exploreImportSubmitBtn){
-            exploreImportSubmitBtn.disabled = false
-            exploreImportSubmitBtn.textContent = 'Registrar e Importar'
-            exploreImportSubmitBtn.classList.remove('explore-busy-btn')
+            setImportSubmitBusy(false)
         }
         isUploading = false
     }
@@ -802,9 +808,7 @@ export function createImportController(options){
             isUploading = true
 
             if(exploreImportSubmitBtn){
-                exploreImportSubmitBtn.disabled = true
-                exploreImportSubmitBtn.textContent = 'Enviando...'
-                exploreImportSubmitBtn.classList.add('explore-busy-btn')
+                setImportSubmitBusy(true)
             }
 
             const xhr = new XMLHttpRequest()
@@ -822,11 +826,6 @@ export function createImportController(options){
 
             const finish = ()=>{
                 isUploading = false
-                if(exploreImportSubmitBtn){
-                    exploreImportSubmitBtn.disabled = false
-                    exploreImportSubmitBtn.textContent = 'Registrar e Importar'
-                    exploreImportSubmitBtn.classList.remove('explore-busy-btn')
-                }
                 if(exploreImportBar){
                     exploreImportBar.style.width = '0%'
                 }
@@ -859,6 +858,7 @@ export function createImportController(options){
                     importLastTrackedName = ''
                     importLastUploadedSourceId = 0
                     showToast?.(response?.message || 'Falha ao importar arquivo.')
+                    setImportSubmitBusy(false)
                 }
                 finish()
                 refreshImportStatuses()
@@ -869,6 +869,7 @@ export function createImportController(options){
                 importLastTrackedName = ''
                 importLastUploadedSourceId = 0
                 showToast?.('Falha de rede ao enviar arquivo.')
+                setImportSubmitBusy(false)
                 finish()
             }
             xhr.onabort = ()=>{
@@ -877,6 +878,7 @@ export function createImportController(options){
                 importLastTrackedName = ''
                 importLastUploadedSourceId = 0
                 showToast?.('Upload cancelado.')
+                setImportSubmitBusy(false)
                 finish()
             }
             xhr.send(formData)

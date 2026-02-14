@@ -4,15 +4,20 @@ import { createLoadingController } from './explore/loading'
 import { createSearchFiltersController } from './explore/search-filters'
 import { createOverridesController } from './explore/overrides'
 import { createImportController } from './explore/import'
+import initExploreOperationsWizard from './explore/operations-wizard'
 
 export default function initExplore(){
 
     const $  = id => document.getElementById(id)
     const qs = s  => document.querySelector(s)
 
-    let next    = null
+    let nextAfterId = null
+    let hasMore = true
     let loading = false
     let total   = 0
+    let filteredTotal = null
+    let sourceTotalRecords = null
+    let sourceTotalSourceId = null
     let debounceTimer = null
     let lastSelectedSourceValue = ''
     let importAttentionTimer = null
@@ -38,8 +43,12 @@ export default function initExplore(){
     const exploreSearchPreviewWrap = $('exploreSearchPreviewWrap')
     const exploreSearchPreviewBody = $('exploreSearchPreviewBody')
     const exploreSearchPreviewCount = $('exploreSearchPreviewCount')
+    const exploreSearchPreviewSelected = $('exploreSearchPreviewSelected')
     const exploreSearchPreviewEmpty = $('exploreSearchPreviewEmpty')
     const exploreSearchPreviewLoading = $('exploreSearchPreviewLoading')
+    const exploreSearchPreviewSelectPageBtn = $('exploreSearchPreviewSelectPageBtn')
+    const exploreSearchPreviewSelectAllBtn = $('exploreSearchPreviewSelectAllBtn')
+    const exploreSearchPreviewClearSelectionBtn = $('exploreSearchPreviewClearSelectionBtn')
     const score     = $('scoreInput')
     const scoreMobile = $('scoreInputMobile')
     const counter   = $('counter')
@@ -52,10 +61,19 @@ export default function initExplore(){
     const layoutPresetSelect = $('layoutPresetSelect')
     const layoutManageModalEl = $('layoutManageModal')
     const layoutManageCreateInput = $('layoutManageCreateInput')
+    const layoutManageCreateSection = $('layoutManageCreateSection')
+    const layoutManageCreateError = $('layoutManageCreateError')
     const layoutManageCreateBtn = $('layoutManageCreateBtn')
     const layoutManageExistingSection = $('layoutManageExistingSection')
     const layoutManageCurrentName = $('layoutManageCurrentName')
     const layoutManageNameInput = $('layoutManageNameInput')
+    const layoutManageRenameSection = $('layoutManageRenameSection')
+    const layoutManageRenameError = $('layoutManageRenameError')
+    const layoutManageUpdateSection = $('layoutManageUpdateSection')
+    const layoutManageDeleteSection = $('layoutManageDeleteSection')
+    const layoutManageActionRename = $('layoutManageActionRename')
+    const layoutManageActionUpdate = $('layoutManageActionUpdate')
+    const layoutManageActionDelete = $('layoutManageActionDelete')
     const layoutManageRenameBtn = $('layoutManageRenameBtn')
     const layoutManageUpdateBtn = $('layoutManageUpdateBtn')
     const layoutManageDeleteBtn = $('layoutManageDeleteBtn')
@@ -112,7 +130,7 @@ export default function initExplore(){
     const semanticAnchor = $('semanticAnchor')
     const selectionBar = $('selectionBar')
     const selectionCount = $('selectionCount')
-    const selectionExportBtn = $('selectionExportBtn')
+    const selectionSelectAllBtn = $('selectionSelectAllBtn')
     const selectionClearBtn = $('selectionClearBtn')
     const checkAll = $('checkAll')
     const loadingEl = $('exploreLoading')
@@ -136,6 +154,7 @@ export default function initExplore(){
     const emptyStateMeta = $('emptyStateMeta')
     const emptyStateClearBtn = $('emptyStateClearBtn')
     const emptyStateSampleBtn = $('emptyStateSampleBtn')
+    const emptyStateImportBtn = $('emptyStateImportBtn')
     const emptyStateFiltersSummary = $('emptyStateFiltersSummary')
     const columnsModalEl = $('columnsModal')
     const columnsList = $('columnsList')
@@ -190,7 +209,7 @@ export default function initExplore(){
     let baseColumns = [
         { key:'nome',  label:'Nome' },
         { key:'cpf',   label:'CPF' },
-        { key:'email', label:'Email' },
+        { key:'email', label:'E-mail' },
         { key:'phone', label:'Telefone' },
         { key:'data_nascimento', label:'Data de nascimento' },
         { key:'sex',   label:'Sexo' }
@@ -237,7 +256,10 @@ export default function initExplore(){
 
     function normalizeColumnLabel(key){
         if(!key) return ''
-        if(columnLabelMap.has(key)) return columnLabelMap.get(key)
+        const rawKey = String(key).trim()
+        if(columnLabelMap.has(rawKey)) return columnLabelMap.get(rawKey)
+        const normalizedKey = normalizeBaseKeyAlias(rawKey)
+        if(columnLabelMap.has(normalizedKey)) return columnLabelMap.get(normalizedKey)
         const raw = String(key).trim()
         const spaced = raw
             .replace(/[_\-]+/g,' ')
@@ -280,6 +302,8 @@ export default function initExplore(){
         emptyStateMeta,
         emptyStateFiltersSummary,
         emptyStateClearBtn,
+        emptyStateSampleBtn,
+        emptyStateImportBtn,
         search,
         score,
         sourceSelect,
@@ -299,6 +323,50 @@ export default function initExplore(){
         emptyStateController?.setHasSources(!!value)
     }
     const getMinScoreValue = ()=> String(score?.value || scoreMobile?.value || '').trim()
+    const getSourceIdFromContext = ()=>{
+        const urlParams = new URLSearchParams(window.location.search || '')
+        const sourceId = getCurrentSourceId()
+            || (() => {
+                const raw = urlParams.get('source_id') || urlParams.get('lead_source_id') || ''
+                const parsed = Number(raw)
+                return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+            })()
+        return sourceId ? Number(sourceId) : null
+    }
+    const refreshSourceTotalRecords = async ()=>{
+        if(!window.exploreConfig?.dbUrl) return
+        const sourceId = getSourceIdFromContext()
+        if(!sourceId){
+            sourceTotalRecords = null
+            sourceTotalSourceId = null
+            syncFooterCounters()
+            return
+        }
+        if(sourceTotalSourceId === sourceId && Number.isFinite(sourceTotalRecords)){
+            syncFooterCounters()
+            return
+        }
+        try{
+            const params = new URLSearchParams({
+                lead_source_id: String(sourceId),
+                q: '',
+                min_score: '0',
+                with_total: '1',
+                per_page: '1',
+            })
+            const res = await fetch(`${window.exploreConfig.dbUrl}?${params.toString()}`, {
+                headers: { 'Accept': 'application/json' }
+            })
+            const data = await res.json().catch(() => null)
+            if(res.ok && data && typeof data.total === 'number'){
+                sourceTotalRecords = Number(data.total)
+                sourceTotalSourceId = sourceId
+                syncFooterCounters()
+            }
+        }catch(e){
+            // Fallback keeps current counter based on loaded rows.
+        }
+    }
     const setButtonEnabled = (el, enabled)=>{
         if(!el) return
         el.classList.toggle('disabled', !enabled)
@@ -484,7 +552,66 @@ export default function initExplore(){
         key: c.key,
         label: columnLabelMap.get(c.key) || c.label
     }))
+
+    const applyBaseHeaderLabels = ()=>{
+        if(!headerRow) return
+        baseColumns.forEach((column)=>{
+            const th = headerRow.querySelector(`th[data-col="${column.key}"]`)
+            if(!th) return
+            const resizer = th.querySelector('.col-resizer')
+            th.textContent = String(column.label || normalizeColumnLabel(column.key) || column.key)
+            if(resizer){
+                th.appendChild(resizer)
+            }
+        })
+    }
+
     const selectedIds = new Set()
+    let selectionMode = 'manual' // 'manual' | 'all_matching'
+    let allMatchingTotal = null
+    const excludedIds = new Set()
+    let preserveSelectionOnNextReset = false
+
+    function getAllMatchingSelectedCount(){
+        const total = (typeof allMatchingTotal === 'number' && Number.isFinite(allMatchingTotal))
+            ? allMatchingTotal
+            : null
+        if(total === null) return null
+        return Math.max(0, total - excludedIds.size)
+    }
+
+    const formatCount = (value)=>{
+        const n = Number(value)
+        if(!Number.isFinite(n)) return '0'
+        return n.toLocaleString('pt-BR')
+    }
+
+    const syncFooterCounters = ()=>{
+        const filtered = Number.isFinite(filteredTotal) ? Number(filteredTotal) : total
+        const sourceTotal = Number.isFinite(sourceTotalRecords) ? Number(sourceTotalRecords) : null
+        const footerTotal = sourceTotal ?? filtered
+        if(foundCount) foundCount.textContent = formatCount(filtered)
+        if(counter) counter.textContent = formatCount(footerTotal)
+    }
+
+    // Expose selection to other UI modules (wizard, sidebar).
+    window.exploreSelection = {
+        getSelectedIds: () => selectionMode === 'manual' ? Array.from(selectedIds) : [],
+        getSelection: () => {
+            const filters = getExploreFilterSnapshot()
+            const count = selectionMode === 'manual'
+                ? selectedIds.size
+                : getAllMatchingSelectedCount()
+            return {
+                mode: selectionMode,
+                ids: selectionMode === 'manual' ? Array.from(selectedIds) : [],
+                filters,
+                excluded_ids: Array.from(excludedIds),
+                selected_count: count,
+                total_count: (typeof allMatchingTotal === 'number' ? allMatchingTotal : null),
+            }
+        },
+    }
 
     try{
         const raw = localStorage.getItem(storageKey)
@@ -882,7 +1009,7 @@ export default function initExplore(){
        LOAD
     ====================================================== */
 
-    async function load(reset=false){
+	    async function load(reset=false){
 
         if(loading) return
         loading = true
@@ -893,41 +1020,67 @@ export default function initExplore(){
                 sampleMode = false
             }
             body.innerHTML = ''
-            next  = null
+	            nextAfterId = null
+	            hasMore = true
             total = 0
-            counter.innerText = 0
-            if(foundCount) foundCount.innerText = 0
-            clearSelections()
-        }
+            filteredTotal = null
+            syncFooterCounters()
+            if(preserveSelectionOnNextReset){
+                preserveSelectionOnNextReset = false
+            }else{
+                clearSelections()
+            }
+	        }
 
-        const urlParams = new URLSearchParams(window.location.search || '')
-        const sourceId = urlParams.get('source_id') || urlParams.get('lead_source_id') || ''
+	        const urlParams = new URLSearchParams(window.location.search || '')
+	        const sourceId = getCurrentSourceId()
+	            || (() => {
+	                const raw = urlParams.get('source_id') || urlParams.get('lead_source_id') || ''
+	                const parsed = Number(raw)
+	                return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+	            })()
+	        const minScore = getMinScoreValue()
+	        const isListingWholeFile = !!sourceId && String(search?.value || '').trim() === '' && (minScore === '' || minScore === '0')
 
-        const params = new URLSearchParams({
-            q: search?.value || '',
-            min_score: getMinScoreValue(),
-            per_page: 500
-        })
-        if(searchFilters.segment_id) params.set('segment_id', searchFilters.segment_id)
-        if(searchFilters.niche_id) params.set('niche_id', searchFilters.niche_id)
-        if(searchFilters.origin_id) params.set('origin_id', searchFilters.origin_id)
-        ;(searchFilters.cities || []).forEach(city => params.append('cities[]', city))
-        ;(searchFilters.states || []).forEach(uf => params.append('states[]', uf))
-        if(sourceId) params.set('lead_source_id', sourceId)
+	        const params = new URLSearchParams({
+	            q: search?.value || '',
+	            min_score: minScore,
+	            per_page: isListingWholeFile ? 1000 : 500
+	        })
+	        if(sourceId){
+	            params.set('lead_source_id', String(sourceId))
+	        }else{
+	            if(searchFilters.segment_id) params.set('segment_id', searchFilters.segment_id)
+	            if(searchFilters.niche_id) params.set('niche_id', searchFilters.niche_id)
+	            if(searchFilters.origin_id) params.set('origin_id', searchFilters.origin_id)
+	            ;(searchFilters.cities || []).forEach(city => params.append('cities[]', city))
+	            ;(searchFilters.states || []).forEach(uf => params.append('states[]', uf))
+	        }
 
-        const url = next || `${window.exploreConfig.dbUrl}?${params}`
+	        if(reset){
+	            params.set('with_total', '1')
+	        }else if(nextAfterId){
+	            params.set('after_id', String(nextAfterId))
+	        }
+
+	        const url = `${window.exploreConfig.dbUrl}?${params}`
 
         try{
+            if(reset){
+                refreshSourceTotalRecords()
+            }
             const r = await fetch(url)
             const d = await r.json()
 
-            render(d.rows)
-            next = d.next_page
-            if(foundCount && typeof d.total === 'number'){
-                foundCount.innerText = d.total
-            }
-            if(reset && emptyState){
-                emptyState.classList.toggle('d-none', (d.rows || []).length > 0)
+	            render(d.rows)
+	            nextAfterId = d?.next_cursor ? Number(d.next_cursor) : null
+	            hasMore = !!d?.has_more && !!nextAfterId
+                if(typeof d.total === 'number'){
+                    filteredTotal = Number(d.total)
+                }
+                syncFooterCounters()
+	            if(reset && emptyState){
+	                emptyState.classList.toggle('d-none', (d.rows || []).length > 0)
             }
             emptyStateController?.updateEmptyState()
         }
@@ -937,6 +1090,7 @@ export default function initExplore(){
 
         setLoading(false)
         loading = false
+        continuePendingPreviewFocusSearch()
     }
 
 
@@ -995,11 +1149,12 @@ export default function initExplore(){
         }
 
         total += rows.length
-        counter.innerText = total
+        syncFooterCounters()
 
         applyColumnVisibility()
         applyColumnOrder()
         syncRowSelectionState()
+        tryFocusPendingPreviewRow()
     }
 
     function parseExtras(raw){
@@ -1257,31 +1412,162 @@ export default function initExplore(){
         })
     }
 
-    function updateSelectionBar(){
-        const count = selectedIds.size
-        if(selectionCount) selectionCount.textContent = String(count)
-        if(selectionBar){
-            selectionBar.classList.toggle('d-none', count === 0)
-        }
-        if(document.getElementById('selectedCount')){
-            document.getElementById('selectedCount').textContent = String(count)
-        }
-    }
+	    function updateSelectionBar(){
+	        const computed = selectionMode === 'manual'
+	            ? selectedIds.size
+	            : getAllMatchingSelectedCount()
 
-    function clearSelections(){
-        selectedIds.clear()
-        body.querySelectorAll('[data-select-id]').forEach(chk=>{ chk.checked = false })
-        if(checkAll) checkAll.checked = false
-        updateSelectionBar()
-    }
+	        const isUnknownAll = selectionMode === 'all_matching' && computed === null
+	        const countForUi = isUnknownAll ? 'todos' : String(computed ?? 0)
+	        const countForEvent = isUnknownAll ? null : (computed ?? 0)
 
-    function syncRowSelectionState(){
-        body.querySelectorAll('[data-select-id]').forEach(chk=>{
-            const id = Number(chk.getAttribute('data-select-id'))
-            chk.checked = selectedIds.has(id)
+	        if(selectionCount) selectionCount.textContent = countForUi
+	        if(selectionBar){
+	            const shouldShow = selectionMode === 'all_matching' ? true : (computed ?? 0) > 0
+	            selectionBar.classList.toggle('d-none', !shouldShow)
+                wrap?.classList.toggle('has-selection-active', shouldShow)
+	        }
+	        const selectedCountEl = document.getElementById('selectedCount')
+	        if(selectedCountEl){
+	            selectedCountEl.textContent = countForUi
+	        }
+
+	        try{
+	            window.dispatchEvent(new CustomEvent('explore:selection:changed', { detail: { count: countForEvent, mode: selectionMode } }))
+	        }catch(e){}
+	    }
+
+	    function clearSelections(){
+	        selectedIds.clear()
+	        excludedIds.clear()
+	        selectionMode = 'manual'
+	        allMatchingTotal = null
+	        body.querySelectorAll('[data-select-id]').forEach(chk=>{ chk.checked = false })
+	        if(checkAll){
+                checkAll.checked = false
+                checkAll.indeterminate = false
+            }
+	        updateSelectionBar()
+	    }
+
+	    function getExploreFilterSnapshot(){
+	        const params = buildCurrentExploreDbParams()
+	        const snapshot = {
+	            q: String(params.get('q') || ''),
+	            min_score: String(params.get('min_score') || ''),
+	            lead_source_id: params.get('lead_source_id') ? Number(params.get('lead_source_id')) : null,
+	            segment_id: params.get('segment_id') ? Number(params.get('segment_id')) : null,
+	            niche_id: params.get('niche_id') ? Number(params.get('niche_id')) : null,
+	            origin_id: params.get('origin_id') ? Number(params.get('origin_id')) : null,
+	            cities: params.getAll('cities[]'),
+	            states: params.getAll('states[]'),
+	        }
+	        Object.keys(snapshot).forEach((k)=>{
+	            const v = snapshot[k]
+	            if(v === null) return
+	            if(typeof v === 'number' && !Number.isFinite(v)) snapshot[k] = null
+	        })
+	        return snapshot
+	    }
+
+	    function buildCurrentExploreDbParams(){
+        const urlParams = new URLSearchParams(window.location.search || '')
+        const sourceId = getCurrentSourceId()
+            || (() => {
+                const raw = urlParams.get('source_id') || urlParams.get('lead_source_id') || ''
+                const parsed = Number(raw)
+                return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+            })()
+
+        const params = new URLSearchParams({
+            q: search?.value || '',
+            min_score: getMinScoreValue(),
         })
-        updateSelectionBar()
-    }
+        if(sourceId){
+            params.set('lead_source_id', String(sourceId))
+        }else{
+            if(searchFilters.segment_id) params.set('segment_id', searchFilters.segment_id)
+            if(searchFilters.niche_id) params.set('niche_id', searchFilters.niche_id)
+            if(searchFilters.origin_id) params.set('origin_id', searchFilters.origin_id)
+            ;(searchFilters.cities || []).forEach(city => params.append('cities[]', city))
+            ;(searchFilters.states || []).forEach(uf => params.append('states[]', uf))
+        }
+
+	        return params
+	    }
+
+	    async function selectAllMatching(){
+	        if(!window.exploreConfig?.dbUrl) return
+	        try{
+	            showToast('Selecionando todos os encontrados...')
+
+	            selectionMode = 'all_matching'
+	            selectedIds.clear()
+	            excludedIds.clear()
+
+	            // Prefer current total if already known (first load/filter changes).
+	            let total = null
+	            if(foundCount){
+	                const parsed = Number(String(foundCount.textContent || '').replace(/\\D+/g, ''))
+	                if(Number.isFinite(parsed)) total = parsed
+	            }
+
+	            // If total is unknown, ask backend once (does a count) and keep it cached.
+	            if(total === null){
+	                const params = buildCurrentExploreDbParams()
+	                params.set('with_total', '1')
+	                params.set('per_page', '1')
+	                const res = await fetch(`${window.exploreConfig.dbUrl}?${params.toString()}`, {
+	                    headers: { 'Accept': 'application/json' }
+	                })
+	                const data = await res.json().catch(() => null)
+	                if(res.ok && data && typeof data.total === 'number'){
+	                    total = data.total
+	                }
+	            }
+	            allMatchingTotal = (typeof total === 'number' && Number.isFinite(total)) ? total : null
+                if(typeof allMatchingTotal === 'number'){
+                    filteredTotal = Number(allMatchingTotal)
+                    syncFooterCounters()
+                }
+
+                syncRowSelectionState()
+
+	            const picked = getAllMatchingSelectedCount()
+	            if(typeof picked === 'number' && typeof allMatchingTotal === 'number'){
+	                showToast(`Selecionados: ${picked} (de ${allMatchingTotal})`)
+	            }else{
+	                showToast('Selecionados: todos os encontrados')
+	            }
+	        }catch(e){
+	            showToast('Erro ao selecionar todos.')
+	        }
+	    }
+
+	    function syncRowSelectionState(){
+            const visibleChecks = Array.from(body.querySelectorAll('[data-select-id]'))
+	        visibleChecks.forEach(chk=>{
+	            const id = Number(chk.getAttribute('data-select-id'))
+                if(selectionMode === 'manual'){
+                    chk.indeterminate = false
+                    chk.checked = selectedIds.has(id)
+                }else{
+                    // Keep row checkboxes visually clear in global-select mode.
+                    chk.checked = false
+                    chk.indeterminate = false
+                }
+	        })
+            if(checkAll){
+                if(selectionMode === 'manual'){
+                    checkAll.indeterminate = false
+                    checkAll.checked = visibleChecks.length > 0 && visibleChecks.every(chk => chk.checked)
+                }else{
+                    checkAll.checked = false
+                    checkAll.indeterminate = false
+                }
+            }
+	        updateSelectionBar()
+	    }
 
     function openColumnsModal(){
         if(!columnsModalEl) return
@@ -1461,6 +1747,24 @@ export default function initExplore(){
         }
     }
 
+    async function runModalButtonWithFrost(button, action, delayMs = 2000){
+        if(!button || button.disabled) return
+        button.disabled = true
+        button.classList.add('is-submitting')
+        const startedAt = Date.now()
+        try{
+            await action()
+        }finally{
+            const elapsed = Date.now() - startedAt
+            const wait = Math.max(0, delayMs - elapsed)
+            if(wait > 0){
+                await new Promise(resolve => setTimeout(resolve, wait))
+            }
+            button.classList.remove('is-submitting')
+            button.disabled = false
+        }
+    }
+
     async function createLayoutFromManage(){
         if(!getLayoutsStorageKey()){
             showToast('Selecione um arquivo para salvar visualização')
@@ -1506,6 +1810,81 @@ export default function initExplore(){
         return `${baseName} ${next}`
     }
 
+    const layoutManageState = {
+        mode: 'create', // create | manage
+        panel: null,    // rename | update | delete | null
+    }
+
+    function normalizeLayoutName(v){
+        return String(v || '').trim()
+    }
+
+    function setLayoutManageError(el, msg){
+        if(!el) return
+        el.textContent = msg || ''
+        el.classList.toggle('has-error', !!msg)
+    }
+
+    function getCreateNameError(){
+        const name = normalizeLayoutName(layoutManageCreateInput?.value)
+        if(!name) return 'Informe um nome para a visualização.'
+        const layouts = loadSavedLayouts()
+        if(layouts[name]) return 'Já existe uma visualização com esse nome.'
+        return ''
+    }
+
+    function getRenameNameError(){
+        const selectedName = getSelectedLayoutName()
+        const nextName = normalizeLayoutName(layoutManageNameInput?.value)
+        if(!selectedName) return 'Selecione uma visualização.'
+        if(!nextName) return 'Informe o novo nome.'
+        const layouts = loadSavedLayouts()
+        if(nextName !== selectedName && layouts[nextName]) return 'Já existe uma visualização com esse nome.'
+        if(nextName === selectedName) return 'Informe um nome diferente do atual.'
+        return ''
+    }
+
+    function setLayoutManagePanel(panel){
+        layoutManageState.panel = panel
+        layoutManageRenameSection?.classList.toggle('d-none', panel !== 'rename')
+        layoutManageUpdateSection?.classList.toggle('d-none', panel !== 'update')
+        layoutManageDeleteSection?.classList.toggle('d-none', panel !== 'delete')
+    }
+
+    function refreshLayoutManageValidity(){
+        const createErr = getCreateNameError()
+        const renameErr = getRenameNameError()
+        setLayoutManageError(layoutManageCreateError, layoutManageState.mode === 'create' ? createErr : '')
+        setLayoutManageError(layoutManageRenameError, layoutManageState.panel === 'rename' ? renameErr : '')
+
+        if(layoutManageCreateBtn){
+            if(layoutManageState.mode === 'create'){
+                layoutManageCreateBtn.disabled = !!createErr
+                layoutManageCreateBtn.textContent = 'Salvar'
+            }else{
+                const hasSelected = !!getSelectedLayoutName()
+                layoutManageCreateBtn.disabled = !hasSelected
+                layoutManageCreateBtn.textContent = 'Salvar'
+            }
+        }
+        if(layoutManageRenameBtn){
+            layoutManageRenameBtn.disabled = layoutManageState.panel !== 'rename' || !!renameErr
+        }
+        if(layoutManageUpdateBtn){
+            layoutManageUpdateBtn.disabled = layoutManageState.panel !== 'update' || !getSelectedLayoutName()
+        }
+        if(layoutManageDeleteBtn){
+            layoutManageDeleteBtn.disabled = layoutManageState.panel !== 'delete' || !getSelectedLayoutName()
+        }
+    }
+
+    async function runLayoutManagePrimaryAction(){
+        if(layoutManageState.mode === 'create'){
+            return createLayoutFromManage()
+        }
+        return updateSelectedLayoutFromCurrent()
+    }
+
     function openManageLayoutModal(mode = 'manage'){
         if(!getLayoutsStorageKey()){
             showToast('Selecione um arquivo para gerenciar visualizações')
@@ -1515,6 +1894,7 @@ export default function initExplore(){
         const selectedName = getSelectedLayoutName()
         const hasSelected = !!selectedName && !!layouts[selectedName]
         const createMode = mode === 'create' || !hasSelected
+        layoutManageState.mode = createMode ? 'create' : 'manage'
 
         if(layoutManageCreateInput){
             if(createMode){
@@ -1522,6 +1902,9 @@ export default function initExplore(){
                 layoutManageCreateInput.focus()
                 layoutManageCreateInput.select()
             }
+        }
+        if(layoutManageCreateSection){
+            layoutManageCreateSection.classList.toggle('d-none', !createMode)
         }
         if(layoutManageExistingSection){
             layoutManageExistingSection.classList.toggle('d-none', createMode)
@@ -1536,6 +1919,12 @@ export default function initExplore(){
             if(layoutManageCurrentName) layoutManageCurrentName.textContent = '-'
             if(layoutManageNameInput) layoutManageNameInput.value = ''
         }
+        if(createMode){
+            setLayoutManagePanel(null)
+        }else{
+            setLayoutManagePanel('update')
+        }
+        refreshLayoutManageValidity()
         if(window.bootstrap?.Modal && layoutManageModalEl){
             window.bootstrap.Modal.getOrCreateInstance(layoutManageModalEl).show()
         }
@@ -1609,6 +1998,7 @@ export default function initExplore(){
     function deleteSelectedLayout(){
         const selectedName = getSelectedLayoutName()
         if(!selectedName) return
+        const manageModalIsOpen = !!(layoutManageModalEl && layoutManageModalEl.classList.contains('show'))
         const layouts = loadSavedLayouts()
         if(!layouts[selectedName]){
             showToast('Visualização não encontrada')
@@ -1616,24 +2006,34 @@ export default function initExplore(){
         }
         delete layouts[selectedName]
         saveSavedLayouts(layouts)
-        const last = loadLastLayoutSelection()
-        if(last === selectedName){
-            saveLastLayoutSelection('')
-        }
-        if(Object.keys(layouts).length === 0){
+
+        const remainingNames = Object.keys(layouts).sort((a,b)=>a.localeCompare(b, 'pt-BR'))
+        if(remainingNames.length === 0){
             saveLastLayoutSelection(LAST_LAYOUT_DEFAULT_SENTINEL)
+            clearLayoutSelectionUI()
+            refreshLayoutPresetOptions()
+            resetColumnsToDefault()
+            saveViewPreference(false)
+            if(manageModalIsOpen){
+                openManageLayoutModal('create')
+            }else if(window.bootstrap?.Modal && layoutManageModalEl){
+                window.bootstrap.Modal.getOrCreateInstance(layoutManageModalEl).hide()
+            }
+            showToast('Visualização excluída')
+            return
         }
-        clearLayoutSelectionUI()
-        refreshLayoutPresetOptions()
-        if(window.bootstrap?.Modal && layoutDeleteConfirmModalEl){
-            window.bootstrap.Modal.getOrCreateInstance(layoutDeleteConfirmModalEl).hide()
-        }
-        if(window.bootstrap?.Modal && layoutManageModalEl){
-            window.bootstrap.Modal.getOrCreateInstance(layoutManageModalEl).hide()
-        }
-        resetColumnsToDefault()
+
+        const nextSelectedName = remainingNames[0]
+        saveLastLayoutSelection(nextSelectedName)
+        refreshLayoutPresetOptions(nextSelectedName)
+        applyNamedLayout(nextSelectedName, { silent: true, markSelected: true })
         saveViewPreference(false)
-        showToast('Visualização excluída')
+
+        if(manageModalIsOpen){
+            openManageLayoutModal('manage')
+        }
+
+        showToast(`Visualização excluída. Ativa: ${nextSelectedName}`)
     }
 
     function setCellRawValue(cell, value){
@@ -1907,21 +2307,58 @@ export default function initExplore(){
 
     columnsBtn?.addEventListener('click', openColumnsModal)
     columnsBtnMobile?.addEventListener('click', openColumnsModal)
-    layoutManageCreateBtn?.addEventListener('click', createLayoutFromManage)
+    layoutManageCreateBtn?.addEventListener('click', ()=>{
+        const shouldCloseAfterSave = layoutManageState.mode !== 'create'
+        runModalButtonWithFrost(layoutManageCreateBtn, ()=>runLayoutManagePrimaryAction(), 2000).then(()=>{
+            if(shouldCloseAfterSave && window.bootstrap?.Modal && layoutManageModalEl){
+                window.bootstrap.Modal.getOrCreateInstance(layoutManageModalEl).hide()
+            }
+        })
+    })
     layoutManageCreateInput?.addEventListener('keydown', (e)=>{
         if(e.key === 'Enter'){
             e.preventDefault()
-            createLayoutFromManage()
+            layoutManageCreateBtn?.click()
         }
     })
-    layoutManageRenameBtn?.addEventListener('click', renameSelectedLayout)
-    layoutManageUpdateBtn?.addEventListener('click', updateSelectedLayoutFromCurrent)
-    layoutManageDeleteBtn?.addEventListener('click', requestDeleteSelectedLayout)
-    layoutDeleteConfirmBtn?.addEventListener('click', deleteSelectedLayout)
+    layoutManageCreateInput?.addEventListener('input', refreshLayoutManageValidity)
+    layoutManageNameInput?.addEventListener('input', refreshLayoutManageValidity)
+    layoutManageActionRename?.addEventListener('click', ()=>{
+        setLayoutManagePanel('rename')
+        refreshLayoutManageValidity()
+        layoutManageNameInput?.focus()
+        layoutManageNameInput?.select()
+    })
+    layoutManageActionUpdate?.addEventListener('click', ()=>{
+        setLayoutManagePanel('update')
+        refreshLayoutManageValidity()
+    })
+    layoutManageActionDelete?.addEventListener('click', ()=>{
+        setLayoutManagePanel('delete')
+        refreshLayoutManageValidity()
+    })
+    layoutManageRenameBtn?.addEventListener('click', ()=>{
+        runModalButtonWithFrost(layoutManageRenameBtn, ()=>renameSelectedLayout())
+    })
+    layoutManageUpdateBtn?.addEventListener('click', ()=>{
+        runModalButtonWithFrost(layoutManageUpdateBtn, ()=>updateSelectedLayoutFromCurrent())
+    })
+    layoutManageDeleteBtn?.addEventListener('click', ()=>{
+        runModalButtonWithFrost(layoutManageDeleteBtn, async ()=>{
+            await new Promise(resolve=>setTimeout(resolve, 2000))
+            deleteSelectedLayout()
+        }, 0)
+    })
+    layoutDeleteConfirmBtn?.addEventListener('click', ()=>{
+        runModalButtonWithFrost(layoutDeleteConfirmBtn, async ()=>{
+            await new Promise(resolve=>setTimeout(resolve, 2000))
+            deleteSelectedLayout()
+        }, 0)
+    })
     layoutManageNameInput?.addEventListener('keydown', (e)=>{
         if(e.key === 'Enter'){
             e.preventDefault()
-            renameSelectedLayout()
+            layoutManageRenameBtn?.click()
         }
     })
     layoutPresetSelect?.addEventListener('change', ()=>{
@@ -1978,14 +2415,14 @@ export default function initExplore(){
         applyColumnOrder()
     })
 
-    wrap.addEventListener('scroll', ()=>{
-        if(!next || loading) return
+	    wrap.addEventListener('scroll', ()=>{
+	        if(!hasMore || loading) return
 
         const nearBottom =
             wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 180
 
-        if(nearBottom) load()
-    })
+	        if(nearBottom) load()
+	    })
 
 
     function debounceReload(){
@@ -1996,6 +2433,121 @@ export default function initExplore(){
     let searchPreviewController = null
     let searchPreviewAbort = null
     let sampleMode = false
+    let pendingPreviewFocusLeadId = null
+    let pendingPreviewFocusPagesTried = 0
+    const MAX_PREVIEW_FOCUS_PAGES = 8
+    let previewFocusFlashTimer = null
+
+    function clearPendingPreviewFocus(){
+        pendingPreviewFocusLeadId = null
+        pendingPreviewFocusPagesTried = 0
+    }
+
+    function setPendingPreviewFocus(leadId){
+        const parsed = Number(leadId)
+        if(!Number.isFinite(parsed) || parsed <= 0){
+            clearPendingPreviewFocus()
+            return
+        }
+        pendingPreviewFocusLeadId = parsed
+        pendingPreviewFocusPagesTried = 0
+    }
+
+    function tryFocusPendingPreviewRow(){
+        if(!pendingPreviewFocusLeadId || !body) return false
+        const row = body.querySelector(`tr[data-id="${pendingPreviewFocusLeadId}"]`)
+        if(!row) return false
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        row.classList.add('explore-row-preview-focus')
+        if(previewFocusFlashTimer){
+            clearTimeout(previewFocusFlashTimer)
+        }
+        previewFocusFlashTimer = setTimeout(()=>{
+            row.classList.remove('explore-row-preview-focus')
+        }, 2200)
+        clearPendingPreviewFocus()
+        return true
+    }
+
+    function continuePendingPreviewFocusSearch(){
+        if(!pendingPreviewFocusLeadId) return
+        if(tryFocusPendingPreviewRow()) return
+        if(loading) return
+        if(!hasMore || pendingPreviewFocusPagesTried >= MAX_PREVIEW_FOCUS_PAGES){
+            clearPendingPreviewFocus()
+            return
+        }
+        pendingPreviewFocusPagesTried += 1
+        load(false)
+    }
+
+    const previewSelectedIds = new Set()
+    let previewSelectAllMatching = false
+    let previewRowsCache = []
+    let previewTotalCount = 0
+
+    function resetPreviewSelectionState(){
+        previewSelectedIds.clear()
+        previewSelectAllMatching = false
+        previewRowsCache = []
+        previewTotalCount = 0
+        updatePreviewSelectionSummary()
+    }
+
+    function updatePreviewSelectionSummary(){
+        if(!exploreSearchPreviewSelected) return
+        const count = previewSelectAllMatching
+            ? (Number.isFinite(previewTotalCount) ? previewTotalCount : 0)
+            : previewSelectedIds.size
+        exploreSearchPreviewSelected.textContent = `Selecionados: ${count}`
+    }
+
+    function setPreviewSelection(ids){
+        previewSelectedIds.clear()
+        ids.forEach((id)=>{
+            const parsed = Number(id)
+            if(Number.isFinite(parsed) && parsed > 0){
+                previewSelectedIds.add(parsed)
+            }
+        })
+        previewSelectAllMatching = false
+        updatePreviewSelectionSummary()
+        renderSearchPreview(previewRowsCache, previewTotalCount)
+    }
+
+    function setPreviewSelectAllMatching(enabled){
+        previewSelectAllMatching = !!enabled
+        if(previewSelectAllMatching){
+            previewSelectedIds.clear()
+        }
+        updatePreviewSelectionSummary()
+        renderSearchPreview(previewRowsCache, previewTotalCount)
+    }
+
+    function applyPreviewSelectionToGrid(){
+        if(previewSelectAllMatching){
+            preserveSelectionOnNextReset = false
+            selectionMode = 'manual'
+            selectedIds.clear()
+            excludedIds.clear()
+            allMatchingTotal = null
+            if(Number.isFinite(previewTotalCount)){
+                filteredTotal = Number(previewTotalCount)
+                syncFooterCounters()
+            }
+            updateSelectionBar()
+            return
+        }
+        if(previewSelectedIds.size > 0){
+            preserveSelectionOnNextReset = true
+            selectionMode = 'manual'
+            excludedIds.clear()
+            selectedIds.clear()
+            previewSelectedIds.forEach((id)=>selectedIds.add(id))
+            allMatchingTotal = null
+            updateSelectionBar()
+        }
+    }
 
     function buildPreviewParams(){
         const params = new URLSearchParams({
@@ -2029,12 +2581,74 @@ export default function initExplore(){
 
     function renderSearchPreview(rows, total = 0){
         if(!exploreSearchPreviewBody || !exploreSearchPreviewCount) return
-        exploreSearchPreviewCount.textContent = `${total} registros`
-        if(!rows.length){
-            if(exploreSearchPreviewEmpty){
-                exploreSearchPreviewEmpty.textContent = 'Nenhum registro encontrado com esses filtros.'
-                exploreSearchPreviewEmpty.classList.remove('d-none')
+        previewRowsCache = Array.isArray(rows) ? rows : []
+        previewTotalCount = Number.isFinite(total) ? Number(total) : previewRowsCache.length
+        updatePreviewSelectionSummary()
+        const searchTerm = String(exploreSearchModalInput?.value || '').trim()
+        const resolvePreviewMeta = (row, term)=>{
+            const baseCandidates = [
+                { key: 'name', label: 'Nome', value: row?.name },
+                { key: 'email', label: 'Email', value: row?.email },
+                { key: 'cpf', label: 'CPF', value: row?.cpf },
+                { key: 'phone', label: 'Telefone', value: row?.phone },
+                { key: 'city', label: 'Cidade', value: row?.city },
+                { key: 'uf', label: 'UF', value: row?.uf },
+            ]
+
+            const extras = (row && typeof row.extras_json === 'object' && row.extras_json !== null)
+                ? row.extras_json
+                : {}
+            const extraCandidates = Object.entries(extras).map(([key, value])=>({
+                key,
+                label: normalizeColumnLabel(key),
+                value
+            }))
+
+            const candidates = [...baseCandidates, ...extraCandidates]
+            const normalizedTerm = String(term || '').toLowerCase()
+
+            if(normalizedTerm){
+                const matched = candidates.find((candidate)=>{
+                    const value = candidate?.value
+                    if(value === null || value === undefined) return false
+                    return String(value).toLowerCase().includes(normalizedTerm)
+                })
+                if(matched){
+                    return {
+                        label: matched.label,
+                        value: matched.value
+                    }
+                }
             }
+
+            const fallback = candidates.find((candidate)=>{
+                const value = candidate?.value
+                return value !== null && value !== undefined && String(value).trim() !== ''
+            })
+
+            if(fallback){
+                return {
+                    label: fallback.label,
+                    value: fallback.value
+                }
+            }
+
+            return {
+                label: 'Registro',
+                value: 'Sem detalhes'
+            }
+        }
+        if(typeof total === 'number'){
+            exploreSearchPreviewCount.textContent = `${total} registros`
+        }else{
+            const n = Array.isArray(rows) ? rows.length : 0
+            exploreSearchPreviewCount.textContent = n ? `${n}+ registros (amostra)` : `0 registros`
+	        }
+	        if(!rows.length){
+	            if(exploreSearchPreviewEmpty){
+	                exploreSearchPreviewEmpty.textContent = 'Nenhum registro encontrado com esses filtros.'
+	                exploreSearchPreviewEmpty.classList.remove('d-none')
+	            }
             exploreSearchPreviewBody.innerHTML = exploreSearchPreviewEmpty?.outerHTML || ''
             return
         }
@@ -2045,17 +2659,28 @@ export default function initExplore(){
             const city = formatCity(r.city)
             const uf = formatUF(r.uf)
             const sub = [city, uf].filter(Boolean).join(' • ')
-            const scoreText = r.score !== null && r.score !== undefined ? String(r.score) : '-'
+            const meta = resolvePreviewMeta(r, searchTerm)
+            const metaText = `${meta.label}: ${meta.value ?? ''}`
+            const rowId = Number(r?.id)
+            const isSelectable = Number.isFinite(rowId) && rowId > 0
+            const checked = previewSelectAllMatching || (isSelectable && previewSelectedIds.has(rowId))
             return `
-                <div class="explore-search-preview-row">
-                    <div class="explore-search-preview-main">
-                        <div class="explore-search-preview-name">${escapeHtml(formatName(r.name || ''))}</div>
-                        <div class="explore-search-preview-sub">
-                            <span>${escapeHtml(r.email || '')}</span>
-                            ${sub ? `<span>${escapeHtml(sub)}</span>` : ''}
+                <div class="explore-search-preview-row ${isSelectable ? 'is-selectable' : ''} ${checked ? 'is-selected' : ''}" ${isSelectable ? `data-preview-row-id="${rowId}" role="button" tabindex="0"` : ''}>
+                    <div class="explore-search-preview-main-wrap">
+                        ${isSelectable ? `
+                            <label class="explore-search-preview-check">
+                                <input type="checkbox" data-preview-select-id="${rowId}" ${checked ? 'checked' : ''}>
+                            </label>
+                        ` : ''}
+                        <div class="explore-search-preview-main">
+                            <div class="explore-search-preview-name">${escapeHtml(formatName(r.name || ''))}</div>
+                            <div class="explore-search-preview-sub">
+                                <span>${escapeHtml(r.email || '')}</span>
+                                ${sub ? `<span>${escapeHtml(sub)}</span>` : ''}
+                            </div>
                         </div>
                     </div>
-                    <div class="explore-search-preview-meta">Score ${escapeHtml(scoreText)}</div>
+                    <div class="explore-search-preview-meta">${escapeHtml(metaText)}</div>
                 </div>
             `
         }).join('')
@@ -2190,7 +2815,8 @@ export default function initExplore(){
                 renderSearchPreview([], 0)
                 return
             }
-            renderSearchPreview(Array.isArray(data?.rows) ? data.rows : [], Number(data?.total || 0))
+            const total = typeof data?.total === 'number' ? data.total : null
+            renderSearchPreview(Array.isArray(data?.rows) ? data.rows : [], total)
         }catch(e){
             if(e?.name === 'AbortError') return
             renderSearchPreview([], 0)
@@ -2232,6 +2858,15 @@ export default function initExplore(){
         clearFiltersBtn,
         clearFiltersBtnMobile,
         searchFilters,
+        onBeforeApplySearch: ()=>{
+            applyPreviewSelectionToGrid()
+        },
+        onModalShown: ()=>{
+            resetPreviewSelectionState()
+        },
+        onModalHidden: ()=>{
+            resetPreviewSelectionState()
+        },
         onReload: ()=>load(true),
         onResetColumns: resetColumnsToDefault,
         onFiltersUpdated: ()=>emptyStateController?.updateEmptyState(),
@@ -2246,46 +2881,66 @@ export default function initExplore(){
         }
     })
     searchFiltersController.bind()
+    exploreSearchPreviewSelectPageBtn?.addEventListener('click', ()=>{
+        const ids = previewRowsCache
+            .map((row)=>Number(row?.id))
+            .filter((id)=>Number.isFinite(id) && id > 0)
+        setPreviewSelection(ids)
+    })
+    exploreSearchPreviewSelectAllBtn?.addEventListener('click', ()=>{
+        setPreviewSelectAllMatching(true)
+    })
+    exploreSearchPreviewClearSelectionBtn?.addEventListener('click', ()=>{
+        setPreviewSelection([])
+    })
+    exploreSearchPreviewBody?.addEventListener('click', (event)=>{
+        const target = event.target instanceof Element ? event.target : null
+        if(!target) return
+        const row = target.closest('[data-preview-row-id]')
+        if(!row) return
+        if(target.closest('input[data-preview-select-id]')) return
+        const leadId = Number(row.getAttribute('data-preview-row-id'))
+        if(!Number.isFinite(leadId) || leadId <= 0) return
+        if(previewSelectAllMatching){
+            return
+        }
+        if(previewSelectedIds.has(leadId)){
+            previewSelectedIds.delete(leadId)
+        }else{
+            previewSelectedIds.add(leadId)
+        }
+        renderSearchPreview(previewRowsCache, previewTotalCount)
+    })
+    exploreSearchPreviewBody?.addEventListener('change', (event)=>{
+        const trigger = event.target instanceof Element
+            ? event.target.closest('input[data-preview-select-id]')
+            : null
+        if(!trigger) return
+        const leadId = Number(trigger.getAttribute('data-preview-select-id'))
+        if(!Number.isFinite(leadId) || leadId <= 0) return
+        if(previewSelectAllMatching){
+            renderSearchPreview(previewRowsCache, previewTotalCount)
+            return
+        }
+        if(trigger.checked){
+            previewSelectedIds.add(leadId)
+        }else{
+            previewSelectedIds.delete(leadId)
+        }
+        renderSearchPreview(previewRowsCache, previewTotalCount)
+    })
+    exploreSearchPreviewBody?.addEventListener('keydown', (event)=>{
+        if(event.key !== 'Enter' && event.key !== ' ') return
+        const trigger = event.target instanceof Element
+            ? event.target.closest('[data-preview-row-id]')
+            : null
+        if(!trigger) return
+        event.preventDefault()
+        trigger.click()
+    })
     emptyStateController?.bindClear(()=> searchFiltersController.clearFilters(false))
     emptyStateSampleBtn?.addEventListener('click', ()=>{
-        if(sampleMode) return
         sampleMode = true
-        const sampleVisibleExtras = ['data_nascimento']
-        const sampleHiddenExtras = [
-            'empresa','cargo','status','segmento','origem','ultima_compra',
-            'bairro','rua','endereco','telefone_residencial'
-        ]
-        const sampleExtras = [...sampleVisibleExtras, ...sampleHiddenExtras]
-        columnLabelMap.set('data_nascimento', 'Data de nascimento')
-        if(headerRow){
-            const baseKeys = new Set(baseColumns.map(c=>c.key))
-            Array.from(headerRow.children).forEach(cell=>{
-                const key = getColKey(cell)
-                if(key && key !== 'select' && !baseKeys.has(key)){
-                    cell.remove()
-                }
-            })
-        }
-        extrasColumns.clear()
-        sampleExtras.forEach((k)=>{
-            if(!extrasColumns.has(k)){
-                extrasColumns.add(k)
-            }
-        })
-        sampleExtras.forEach((k)=> addExtrasHeader(k))
-        rebuildColumnsModal()
-        visibleColumns = new Set([
-            'nome','cpf','email','phone','data_nascimento','sex'
-        ])
-        persistColumns()
-        columnOrder = [
-            'nome','cpf','email','phone','data_nascimento','sex'
-        ]
-        persistOrder()
-        body.innerHTML = ''
-        next = null
-        total = 0
-        clearSelections()
         const sampleRows = [
             {
                 id: -1,
@@ -2360,11 +3015,64 @@ export default function initExplore(){
                 }
             }
         ]
+        try{
+        const sampleVisibleExtras = ['data_nascimento']
+        const sampleHiddenExtras = [
+            'empresa','cargo','status','segmento','origem','ultima_compra',
+            'bairro','rua','endereco','telefone_residencial'
+        ]
+        const sampleExtras = [...sampleVisibleExtras, ...sampleHiddenExtras]
+        columnLabelMap.set('data_nascimento', 'Data de nascimento')
+        if(headerRow){
+            const baseKeys = new Set(baseColumns.map(c=>c.key))
+            Array.from(headerRow.children).forEach(cell=>{
+                const key = getColKey(cell)
+                if(key && key !== 'select' && !baseKeys.has(key)){
+                    cell.remove()
+                }
+            })
+        }
+        extrasColumns.clear()
+        sampleExtras.forEach((k)=>{
+            if(!extrasColumns.has(k)){
+                extrasColumns.add(k)
+            }
+        })
+        sampleExtras.forEach((k)=> addExtrasHeader(k))
+        rebuildColumnsModal()
+        visibleColumns = new Set([
+            'nome','cpf','email','phone','data_nascimento','sex'
+        ])
+        persistColumns()
+        columnOrder = [
+            'nome','cpf','email','phone','data_nascimento','sex'
+        ]
+        persistOrder()
+        body.innerHTML = ''
+        next = null
+        total = 0
+        filteredTotal = null
+        clearSelections()
+        }catch(err){
+            console.warn('Sample mode setup failed, rendering fallback sample rows.', err)
+            body.innerHTML = ''
+            total = 0
+            filteredTotal = null
+            sourceTotalRecords = null
+            sourceTotalSourceId = null
+            syncFooterCounters()
+            clearSelections()
+        }
+        loading = false
+        setLoading(false)
+        if(emptyState) emptyState.classList.add('d-none')
         render(sampleRows)
         applyColumnVisibility()
         applyColumnOrder()
-        if(foundCount) foundCount.innerText = sampleRows.length
-        if(emptyState) emptyState.classList.add('d-none')
+        filteredTotal = sampleRows.length
+        sourceTotalRecords = null
+        sourceTotalSourceId = null
+        syncFooterCounters()
     })
 
     exportBtn?.addEventListener('click', ()=>{
@@ -2667,19 +3375,28 @@ export default function initExplore(){
     openColumnsAdminModalBtn?.addEventListener('click', openColumnsAdminModal)
     exploreColumnsEditBtn?.addEventListener('click', openColumnsAdminModal)
 
-    body?.addEventListener('change', (e)=>{
-        const target = e.target
-        if(!(target instanceof HTMLInputElement)) return
-        if(target.matches('[data-select-id]')){
-            const id = Number(target.getAttribute('data-select-id'))
-            if(target.checked){
-                selectedIds.add(id)
-            }else{
-                selectedIds.delete(id)
-            }
-            updateSelectionBar()
-        }
-    })
+	    body?.addEventListener('change', (e)=>{
+	        const target = e.target
+	        if(!(target instanceof HTMLInputElement)) return
+	        if(target.matches('[data-select-id]')){
+	            const id = Number(target.getAttribute('data-select-id'))
+	            if(selectionMode === 'manual'){
+	                if(target.checked){
+	                    selectedIds.add(id)
+	                }else{
+	                    selectedIds.delete(id)
+	                }
+	            }else{
+	                // all_matching: default selected, unchecking excludes.
+	                if(target.checked){
+	                    excludedIds.delete(id)
+	                }else{
+	                    excludedIds.add(id)
+	                }
+	            }
+	            updateSelectionBar()
+	        }
+	    })
 
     body?.addEventListener('dblclick', (e)=>{
         const cell = e.target instanceof Element ? e.target.closest('td[data-editable="1"]') : null
@@ -2696,37 +3413,31 @@ export default function initExplore(){
         openInlineCellEditor(cell)
     })
 
-    checkAll?.addEventListener('change', ()=>{
-        const checked = checkAll.checked
-        body.querySelectorAll('[data-select-id]').forEach(chk=>{
-            chk.checked = checked
-            const id = Number(chk.getAttribute('data-select-id'))
-            if(checked){
-                selectedIds.add(id)
-            }else{
-                selectedIds.delete(id)
-            }
-        })
-        updateSelectionBar()
-    })
+	    checkAll?.addEventListener('change', ()=>{
+	        const checked = checkAll.checked
+	        body.querySelectorAll('[data-select-id]').forEach(chk=>{
+	            chk.checked = checked
+	            const id = Number(chk.getAttribute('data-select-id'))
+	            if(selectionMode === 'manual'){
+	                if(checked){
+	                    selectedIds.add(id)
+	                }else{
+	                    selectedIds.delete(id)
+	                }
+	            }else{
+	                if(checked){
+	                    excludedIds.delete(id)
+	                }else{
+	                    excludedIds.add(id)
+	                }
+	            }
+	        })
+	        updateSelectionBar()
+	    })
 
     selectionClearBtn?.addEventListener('click', clearSelections)
 
-    selectionExportBtn?.addEventListener('click', ()=>{
-        if(!selectedIds.size) return
-        showToast('Exportando CSV...')
-        const orderedCols = Array.isArray(columnOrder) && columnOrder.length
-            ? columnOrder.filter(k=>visibleColumns.has(k))
-            : []
-        const exportCols = orderedCols.length ? orderedCols : Array.from(visibleColumns)
-        const params = new URLSearchParams({
-            export: 'csv',
-            cols: exportCols.join(','),
-            ids: Array.from(selectedIds).join(',')
-        })
-        window.location.href = `${window.exploreConfig.dbUrl}?${params.toString()}`
-        setTimeout(()=>showToast('Arquivo gerado'), 1400)
-    })
+    selectionSelectAllBtn?.addEventListener('click', selectAllMatching)
 
     async function loadSemanticOptions(){
         if(!semanticSegmentInput) return
@@ -3112,6 +3823,18 @@ export default function initExplore(){
     }
 
     semanticSaveBtn?.addEventListener('click', async ()=>{
+        const startedAt = Date.now()
+        const waitMinSubmitFx = async ()=>{
+            const elapsed = Date.now() - startedAt
+            const remaining = Math.max(0, 2000 - elapsed)
+            if(!remaining) return
+            await new Promise((resolve)=>setTimeout(resolve, remaining))
+        }
+        if(semanticSaveBtn){
+            semanticSaveBtn.disabled = true
+            semanticSaveBtn.classList.add('is-submitting')
+        }
+
         const locations = []
         semanticSelected.city.forEach((_, id)=>locations.push({ type:'city', ref_id:id }))
         semanticSelected.state.forEach((_, id)=>locations.push({ type:'state', ref_id:id }))
@@ -3122,6 +3845,11 @@ export default function initExplore(){
         const sourceId = Number.isFinite(parsedSourceId) && parsedSourceId > 0 ? parsedSourceId : null
         if(!sourceId){
             console.error('Semantic save error: source_id inválido/ausente', { rawSourceId })
+            await waitMinSubmitFx()
+            if(semanticSaveBtn){
+                semanticSaveBtn.disabled = false
+                semanticSaveBtn.classList.remove('is-submitting')
+            }
             return
         }
 
@@ -3148,6 +3876,7 @@ export default function initExplore(){
             const j = await res.json().catch(()=>null)
             if(!res.ok || (j && j.ok === false)){
                 console.error('Semantic save error:', j)
+                await waitMinSubmitFx()
                 return
             }
 
@@ -3160,8 +3889,15 @@ export default function initExplore(){
             if(modalEl){
                 bootstrap.Modal.getOrCreateInstance(modalEl).hide()
             }
+            await waitMinSubmitFx()
         }catch(e){
             console.error('Semantic save error:', e)
+            await waitMinSubmitFx()
+        }finally{
+            if(semanticSaveBtn){
+                semanticSaveBtn.disabled = false
+                semanticSaveBtn.classList.remove('is-submitting')
+            }
         }
     })
 
@@ -3173,10 +3909,11 @@ export default function initExplore(){
     loadSearchSemanticFilters()
     initSemanticTooltips()
 
-    initExploreTooltips()
+	    initExploreTooltips()
+	    initExploreOperationsWizard()
 
-    loadColumnWidths()
-    loadSources()
+	    loadColumnWidths()
+	    loadSources()
     if(isForceImportGate){
         setHasSources(false)
         importController.setExploreLocked(false)
@@ -3184,6 +3921,7 @@ export default function initExplore(){
     setDataQualityEnabled(!!sourceSelect?.value)
     setSemanticEnabled(!!sourceSelect?.value)
     syncImportAttention()
+    applyBaseHeaderLabels()
     bootstrapExtrasHeaders()
     load(true)
 

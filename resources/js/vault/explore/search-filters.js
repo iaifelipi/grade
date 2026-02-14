@@ -19,12 +19,29 @@ export function createSearchFiltersController(options){
         onReload,
         onResetColumns,
         onFiltersUpdated,
+        onBeforeApplySearch,
+        onModalShown,
+        onModalHidden,
         getPreviewParams,
         onPreviewSearch,
         previewElements
     } = options || {}
 
     let previewTimer = null
+    const clearModalQueries = ()=>{
+        if(exploreSearchModalInput) exploreSearchModalInput.value = ''
+        if(exploreSearchSegmentSelect) exploreSearchSegmentSelect.value = ''
+        if(exploreSearchNicheSelect) exploreSearchNicheSelect.value = ''
+        if(exploreSearchOriginSelect) exploreSearchOriginSelect.value = ''
+        if(exploreSearchCitiesInput) exploreSearchCitiesInput.value = ''
+        if(exploreSearchStatesInput) exploreSearchStatesInput.value = ''
+        if(previewElements?.body){
+            previewElements.body.innerHTML = previewElements.empty?.outerHTML || ''
+        }
+        if(previewElements?.count){
+            previewElements.count.textContent = '0 registros'
+        }
+    }
     const schedulePreview = ()=>{
         if(!onPreviewSearch || !getPreviewParams) return
         clearTimeout(previewTimer)
@@ -119,6 +136,7 @@ export function createSearchFiltersController(options){
         })
 
         exploreSearchApplyBtn?.addEventListener('click', ()=>{
+            onBeforeApplySearch?.()
             syncSearchFromModal(true)
             if(exploreSearchModalEl && window.bootstrap?.Modal){
                 window.bootstrap.Modal.getOrCreateInstance(exploreSearchModalEl).hide()
@@ -126,18 +144,16 @@ export function createSearchFiltersController(options){
         })
 
         exploreSearchClearBtn?.addEventListener('click', ()=>{
-            if(exploreSearchModalInput) exploreSearchModalInput.value = ''
-            if(exploreSearchSegmentSelect) exploreSearchSegmentSelect.value = ''
-            if(exploreSearchNicheSelect) exploreSearchNicheSelect.value = ''
-            if(exploreSearchOriginSelect) exploreSearchOriginSelect.value = ''
-            if(exploreSearchCitiesInput) exploreSearchCitiesInput.value = ''
-            if(exploreSearchStatesInput) exploreSearchStatesInput.value = ''
-            schedulePreview()
+            clearModalQueries()
+            if(exploreSearchModalEl && window.bootstrap?.Modal){
+                window.bootstrap.Modal.getOrCreateInstance(exploreSearchModalEl).hide()
+            }
         })
 
         exploreSearchModalInput?.addEventListener('keydown', (e)=>{
             if(e.key === 'Enter'){
                 e.preventDefault()
+                onBeforeApplySearch?.()
                 syncSearchFromModal(true)
                 if(exploreSearchModalEl && window.bootstrap?.Modal){
                     window.bootstrap.Modal.getOrCreateInstance(exploreSearchModalEl).hide()
@@ -146,17 +162,17 @@ export function createSearchFiltersController(options){
         })
 
         exploreSearchModalEl?.addEventListener('shown.bs.modal', ()=>{
+            clearModalQueries()
+            onModalShown?.()
             if(exploreSearchModalInput){
-                exploreSearchModalInput.value = search?.value || ''
                 exploreSearchModalInput.focus()
-                exploreSearchModalInput.select()
             }
-            if(exploreSearchSegmentSelect) exploreSearchSegmentSelect.value = searchFilters.segment_id || ''
-            if(exploreSearchNicheSelect) exploreSearchNicheSelect.value = searchFilters.niche_id || ''
-            if(exploreSearchOriginSelect) exploreSearchOriginSelect.value = searchFilters.origin_id || ''
-            if(exploreSearchCitiesInput) exploreSearchCitiesInput.value = (searchFilters.cities || []).join(', ')
-            if(exploreSearchStatesInput) exploreSearchStatesInput.value = (searchFilters.states || []).join(', ')
             schedulePreview()
+        })
+
+        exploreSearchModalEl?.addEventListener('hidden.bs.modal', ()=>{
+            clearModalQueries()
+            onModalHidden?.()
         })
 
         clearFiltersBtn?.addEventListener('click', ()=> clearFilters(false))

@@ -5,7 +5,7 @@
 
 @section('content')
 <div
-    class="container-fluid py-4"
+    class="admin-monitoring-page"
     id="monitoringPage"
     data-health-url="{{ route('admin.monitoring.health') }}"
     data-restart-url="{{ route('admin.monitoring.queueRestart') }}"
@@ -14,17 +14,17 @@
     data-incidents-ack-url-template="{{ route('admin.monitoring.incidentsAck', ['id' => '__ID__']) }}"
     data-csrf-token="{{ csrf_token() }}"
 >
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div>
-            <h2 class="h5 mb-1">Monitoramento</h2>
-            <div class="text-muted small">Status em tempo real de workers, filas e importações.</div>
-        </div>
-        <div class="d-flex align-items-center gap-2">
+    <x-admin.page-header
+        title="Monitoramento"
+        subtitle="Status em tempo real de workers, filas e importações."
+    >
+        <x-slot:actions>
+            <a href="{{ route('admin.monitoring.performance') }}" class="btn btn-outline-secondary btn-sm">Performance</a>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="monitoringMuteBtn">Som: ligado</button>
             <span class="badge text-bg-light border" id="monitoringCheckedAt">Aguardando...</span>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="monitoringRefreshBtn">Atualizar</button>
-        </div>
-    </div>
+        </x-slot:actions>
+    </x-admin.page-header>
 
     <div id="monitoringActiveAlert" class="alert alert-danger d-none mb-3" role="alert">
         <div class="d-flex align-items-center justify-content-between gap-2">

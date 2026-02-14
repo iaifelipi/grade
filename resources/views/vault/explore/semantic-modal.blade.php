@@ -1,10 +1,10 @@
 <div class="modal fade" id="semanticModal" tabindex="-1" aria-labelledby="semanticModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow rounded-4">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable grade-modal-pattern-dialog">
+        <div class="modal-content grade-modal-pattern">
             <div class="modal-header border-0 pb-0">
                 <div class="d-flex flex-column gap-2">
                     <div class="d-flex align-items-center gap-2">
-                        <h5 class="fw-semibold mb-0" id="semanticModalTitle">ID Semântica</h5>
+                        <h5 class="modal-title mb-0" id="semanticModalTitle">ID Semântica</h5>
                         <span
                             class="semantic-help"
                             role="button"
@@ -20,7 +20,6 @@
                         facilita segmentações e deixa o Explore mais inteligente.
                     </p>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body pt-3">
@@ -36,25 +35,34 @@
                     <div class="semantic-anchor-badge">
                         Âncora atual
                     </div>
-                    <select id="semanticAnchor" class="form-select"></select>
+                    <label class="grade-field-box grade-field-box--compact w-100 mb-0">
+                        <span class="grade-field-kicker">Referência âncora</span>
+                        <select id="semanticAnchor" class="grade-field-input grade-field-input--select"></select>
+                    </label>
                 </div>
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Segmento</label>
-                        <input id="semanticSegmentInput" class="form-control mb-2" placeholder="Buscar segmento...">
+                        <label class="grade-field-box grade-field-box--compact mb-2">
+                            <span class="grade-field-kicker">Segmento</span>
+                            <input id="semanticSegmentInput" class="grade-field-input" placeholder="Buscar segmento...">
+                        </label>
                         <div id="semanticSegmentResults" class="semantic-results d-none"></div>
                         <div id="semanticSegmentPill" class="semantic-select-pills"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Nicho</label>
-                        <input id="semanticNicheInput" class="form-control mb-2" placeholder="Buscar nicho...">
+                        <label class="grade-field-box grade-field-box--compact mb-2">
+                            <span class="grade-field-kicker">Nicho</span>
+                            <input id="semanticNicheInput" class="grade-field-input" placeholder="Buscar nicho...">
+                        </label>
                         <div id="semanticNicheResults" class="semantic-results d-none"></div>
                         <div id="semanticNichePill" class="semantic-select-pills"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Origem</label>
-                        <input id="semanticOriginInput" class="form-control mb-2" placeholder="Buscar origem...">
+                        <label class="grade-field-box grade-field-box--compact mb-2">
+                            <span class="grade-field-kicker">Origem</span>
+                            <input id="semanticOriginInput" class="grade-field-input" placeholder="Buscar origem...">
+                        </label>
                         <div id="semanticOriginResults" class="semantic-results d-none"></div>
                         <div id="semanticOriginPill" class="semantic-select-pills"></div>
                     </div>
@@ -64,20 +72,26 @@
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Cidades</label>
-                        <input id="semanticCityInput" class="form-control mb-2" placeholder="Buscar cidade...">
+                        <label class="grade-field-box grade-field-box--compact mb-2">
+                            <span class="grade-field-kicker">Cidades</span>
+                            <input id="semanticCityInput" class="grade-field-input" placeholder="Buscar cidade...">
+                        </label>
                         <div id="semanticCityResults" class="semantic-results d-none"></div>
                         <div id="semanticCityPills" class="semantic-select-pills"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Estados</label>
-                        <input id="semanticStateInput" class="form-control mb-2" placeholder="Buscar estado...">
+                        <label class="grade-field-box grade-field-box--compact mb-2">
+                            <span class="grade-field-kicker">Estados</span>
+                            <input id="semanticStateInput" class="grade-field-input" placeholder="Buscar estado...">
+                        </label>
                         <div id="semanticStateResults" class="semantic-results d-none"></div>
                         <div id="semanticStatePills" class="semantic-select-pills"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Países</label>
-                        <input id="semanticCountryInput" class="form-control mb-2" placeholder="Buscar país...">
+                        <label class="grade-field-box grade-field-box--compact mb-2">
+                            <span class="grade-field-kicker">Países</span>
+                            <input id="semanticCountryInput" class="grade-field-input" placeholder="Buscar país...">
+                        </label>
                         <div id="semanticCountryResults" class="semantic-results d-none"></div>
                         <div id="semanticCountryPills" class="semantic-select-pills"></div>
                     </div>
@@ -85,10 +99,10 @@
             </div>
 
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                     Cancelar
                 </button>
-                <button id="semanticSaveBtn" type="button" class="btn btn-primary">
+                <button id="semanticSaveBtn" type="button" class="btn btn-dark">
                     Salvar
                 </button>
             </div>

@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -42,6 +43,8 @@ return Application::configure(basePath: dirname(__DIR__))
             | Grade Multi-tenant ⭐
             */
             'tenant' => \App\Http\Middleware\TenantContextMiddleware::class,
+            'tenant.authctx' => \App\Http\Middleware\TenantAuthContextMiddleware::class,
+            'tenant.permission' => \App\Http\Middleware\TenantPermissionMiddleware::class,
 
             /*
             | ACL interno
@@ -51,6 +54,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->append(\App\Http\Middleware\MaskSensitiveAuditFieldsMiddleware::class);
+        $middleware->append(\App\Http\Middleware\SecurityAccessLogMiddleware::class);
+
+        // Avoid 419 on logout when session/token rotated or stale.
+        $middleware->validateCsrfTokens(except: [
+            'logout',
+        ]);
 
 
         /*
@@ -93,6 +102,21 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $e->getMessage() ?: 'Dados inválidos.',
                 'errors' => $e->errors(),
             ], 422);
+        });
+
+        $exceptions->render(function (AuthenticationException $e, Request $request) use ($isJsonRequest) {
+            if ($isJsonRequest($request)) {
+                return response()->json([
+                    'ok' => false,
+                    'code' => 'unauthenticated',
+                    'message' => 'Usuário não autenticado.',
+                ], 401);
+            }
+
+            $guards = $e->guards();
+            $loginRoute = in_array('tenant', $guards, true) ? 'login' : 'admin.login';
+
+            return redirect()->guest(route($loginRoute));
         });
 
         $exceptions->render(function (AuthorizationException $e, Request $request) use ($isJsonRequest) {

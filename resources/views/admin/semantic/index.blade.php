@@ -3,69 +3,22 @@
 @section('title','Admin — Semântica')
 @section('page-title','Semântica')
 
-@section('topbar-tools')
-    <div class="explore-toolbar explore-toolbar--topbar">
-        <div class="explore-toolbar-actions ms-auto">
-            <div class="explore-chip-group">
-                <div class="explore-filter-inline">
-                    <div class="source-combo">
-                        <div class="source-select-wrap">
-                            <select id="semanticSourceSelect" class="form-select">
-                                <option value="">Todos os arquivos</option>
-                                @foreach($topbarSources as $source)
-                                    <option value="{{ $source->id }}" @selected((int) $currentSourceId === (int) $source->id)>
-                                        {{ $source->original_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <a href="{{ route('home') }}" class="btn btn-primary explore-add-source-btn" title="Abrir Explore" aria-label="Abrir Explore">
-                            <i class="bi bi-plus-lg"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="explore-filter-dropdown dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Filtros
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end explore-filter-menu p-3">
-                        <label class="form-label small text-muted">Arquivo</label>
-                        <select id="semanticSourceSelectMobile" class="form-select mb-2">
-                            <option value="">Todos os arquivos</option>
-                            @foreach($topbarSources as $source)
-                                <option value="{{ $source->id }}" @selected((int) $currentSourceId === (int) $source->id)>
-                                    {{ $source->original_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-@endsection
-
 @section('content')
 
-<div class="container-fluid py-4">
-@if(session('status'))
-    <div class="alert alert-success mb-3">{{ session('status') }}</div>
-@endif
+<div class="admin-semantic-page">
 <div class="semantic-admin" id="semanticTaxonomyPage">
-    <div class="semantic-admin-hero">
-        <div>
-            <h2 class="semantic-admin-title">Taxonomias de Semântica</h2>
-            <p class="semantic-admin-subtitle">
-                Gerencie os termos oficiais de segmento, nicho e origem.
-                Isso impacta filtros e classificação automática.
-            </p>
-        </div>
-        <div class="semantic-admin-actions">
-            <span class="semantic-admin-badge">
-                Alterações afetam filtros e relatórios
-            </span>
-        </div>
-    </div>
+    <x-admin.page-header
+        title="Taxonomias de Semântica"
+        subtitle="Gerencie os termos oficiais de segmento, nicho e origem. Isso impacta filtros e classificação automática."
+    >
+        <x-slot:actions>
+            <span class="semantic-admin-badge">Alterações afetam filtros e relatórios</span>
+        </x-slot:actions>
+    </x-admin.page-header>
+
+    @if(session('status'))
+        <div class="alert alert-success mb-3">{{ session('status') }}</div>
+    @endif
 
     <div class="semantic-admin-grid">
         @php
@@ -206,32 +159,34 @@
 
 <div class="modal fade" id="semanticTaxonomyModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content grade-modal-premium">
-            <div class="modal-header border-0 pb-0">
+        <div class="modal-content grade-modal-pattern">
+            <div class="modal-header">
                 <div>
-                    <h5 class="fw-semibold mb-1" id="semanticTaxonomyModalTitle">Novo item</h5>
+                    <h5 class="modal-title" id="semanticTaxonomyModalTitle">Novo item</h5>
                     <p class="text-muted small mb-0" id="semanticTaxonomyModalHint">
                         Adicione um termo claro e específico.
                     </p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body pt-3">
+            <div class="modal-body">
                 <form method="POST" action="" id="semanticTaxonomyForm">
                     @csrf
                     <input type="hidden" name="_method" value="POST" id="semanticTaxonomyMethod">
                     <div class="mb-3">
-                        <label class="form-label">Nome</label>
-                        <input type="text" class="form-control" name="name" id="semanticTaxonomyName" required maxlength="120">
+                        <label class="grade-field-box">
+                            <span class="grade-field-kicker">Nome</span>
+                            <input type="text" class="grade-field-input" name="name" id="semanticTaxonomyName" required maxlength="120">
+                        </label>
                     </div>
-                    <div class="semantic-admin-helper">
+                    <div class="semantic-admin-helper grade-modal-hint">
                         Dica: mantenha o nome curto e evite duplicidades.
                     </div>
                 </form>
             </div>
-            <div class="modal-footer border-0">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" form="semanticTaxonomyForm" class="btn btn-primary" id="semanticTaxonomySubmit">
+                <button type="submit" form="semanticTaxonomyForm" class="btn btn-dark" id="semanticTaxonomySubmit">
                     Salvar
                 </button>
             </div>
@@ -241,10 +196,10 @@
 
 <div class="modal fade" id="semanticDeleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content grade-modal-premium">
-            <div class="modal-header border-0 pb-0">
+        <div class="modal-content grade-modal-pattern">
+            <div class="modal-header">
                 <div>
-                    <h5 class="fw-semibold mb-1">Confirmar exclusão</h5>
+                    <h5 class="modal-title">Confirmar exclusão</h5>
                     <p class="text-muted small mb-2" id="semanticDeleteMessage">
                         Este item será removido permanentemente.
                     </p>
@@ -252,7 +207,7 @@
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-footer border-0">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-danger" id="semanticDeleteConfirm">
                     Excluir item

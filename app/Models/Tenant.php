@@ -57,6 +57,28 @@ class Tenant extends Model
         return $this->hasMany(User::class, 'tenant_uuid', 'uuid');
     }
 
+    public function tenantUsers()
+    {
+        return $this->hasMany(TenantUser::class, 'tenant_id');
+    }
+
+    public function tenantUserGroups()
+    {
+        return $this->hasMany(TenantUserGroup::class, 'tenant_id');
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(TenantSubscription::class, 'tenant_id');
+    }
+
+    public function currentSubscription()
+    {
+        return $this->hasOne(TenantSubscription::class, 'tenant_id')
+            ->where('status', 'active')
+            ->latestOfMany('id');
+    }
+
 
     /*
     |--------------------------------------------------------------------------

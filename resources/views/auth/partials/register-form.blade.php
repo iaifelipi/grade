@@ -1,12 +1,12 @@
-<div class="grade-auth-header">
-    <div class="grade-auth-icon">
-        <i class="bi bi-person-plus-fill"></i>
-    </div>
-    <div class="grade-auth-title">Crie sua conta</div>
-    <div class="grade-auth-subtitle">Leva menos de um minuto</div>
-</div>
+@php($canRegister = \Illuminate\Support\Facades\Route::has('register'))
 
-<form method="POST" action="{{ route('register') }}" data-auth-form="register">
+<form
+    method="POST"
+    action="{{ $canRegister ? route('register') : '#' }}"
+    data-auth-form="register"
+    class="grade-auth-compact-form"
+    @if(!$canRegister) onsubmit="return false" @endif
+>
     @csrf
 
     <div class="alert alert-danger d-none" data-auth-errors></div>
@@ -20,32 +20,36 @@
         </div>
     @endif
 
-    <div class="mb-3">
-        <label class="form-label">Nome completo</label>
-        <input name="name" value="{{ old('name') }}" class="form-control" required>
+    <div class="grade-auth-fields">
+        <label class="grade-auth-field-box">
+            <span class="grade-auth-field-kicker">Nome completo</span>
+            <input name="name" value="{{ old('name') }}" class="grade-auth-field-input" required>
+        </label>
+
+        <label class="grade-auth-field-box">
+            <span class="grade-auth-field-kicker">E-mail</span>
+            <input name="email" type="email" value="{{ old('email') }}" class="grade-auth-field-input" required>
+        </label>
+
+        <label class="grade-auth-field-box">
+            <span class="grade-auth-field-kicker">Senha</span>
+            <input name="password" type="password" class="grade-auth-field-input" required>
+        </label>
+
+        <label class="grade-auth-field-box">
+            <span class="grade-auth-field-kicker">Confirmar senha</span>
+            <input name="password_confirmation" type="password" class="grade-auth-field-input" required>
+        </label>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input name="email" type="email" value="{{ old('email') }}" class="form-control" required>
-    </div>
+    @if(!$canRegister)
+        <div class="alert alert-warning py-2 mt-2 mb-0">
+            Cadastro desabilitado neste ambiente.
+        </div>
+    @endif
 
-    <div class="mb-3">
-        <label class="form-label">Senha</label>
-        <input name="password" type="password" class="form-control" required>
+    <div class="grade-auth-compact-footer">
+        <button type="button" class="btn btn-outline-secondary" data-auth-switch="login">Entrar</button>
+        <button class="btn btn-dark" data-auth-submit @disabled(!$canRegister)>Registrar</button>
     </div>
-
-    <div class="mb-3">
-        <label class="form-label">Confirmar senha</label>
-        <input name="password_confirmation" type="password" class="form-control" required>
-    </div>
-
-    <button class="btn btn-primary w-100 mt-3" data-auth-submit>
-        Criar conta
-    </button>
 </form>
-
-<div class="grade-auth-note">
-    Já tem conta?
-    <button type="button" class="grade-auth-link btn btn-link p-0 align-baseline" data-auth-switch="login">Entrar</button>
-</div>

@@ -17,10 +17,10 @@
             <div class="explore-filter-inline">
                 {{-- SOURCE FILTER --}}
                 <div class="source-combo">
-                    <div class="source-select-wrap">
+                    <div class="source-select-wrap grade-field-box grade-field-box--compact source-select-field">
                         <select
                             id="sourceSelect"
-                            class="form-select"
+                            class="form-select grade-field-input grade-field-input--select source-select-input"
                         >
                             <option value="">Todos os arquivos</option>
                         </select>
@@ -55,11 +55,12 @@
                 >
                     Filtros
                 </button>
-                <div class="dropdown-menu dropdown-menu-end explore-filter-menu p-3">
-                    <label class="form-label small text-muted">Arquivo</label>
-                    <select id="sourceSelectMobile" class="form-select mb-3">
-                        <option value="">Todos os arquivos</option>
-                    </select>
+                <div class="dropdown-menu dropdown-menu-end explore-filter-menu p-3 grade-menu-pattern">
+                    <label class="grade-field-box grade-field-box--compact mb-3">
+                        <select id="sourceSelectMobile" class="form-select grade-field-input grade-field-input--select">
+                            <option value="">Todos os arquivos</option>
+                        </select>
+                    </label>
 
                     <button
                         id="clearFiltersBtnMobile"
@@ -89,7 +90,7 @@
                             Salvar
                             <span class="badge text-bg-light ms-1 d-none" id="saveMenuBadge">0</span>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <ul class="dropdown-menu dropdown-menu-end grade-menu-pattern">
                             <li><button class="dropdown-item" type="button" id="viewOverridesBtn">Ver alterações</button></li>
                             <li><button class="dropdown-item" type="button" id="publishOverridesBtn">Publicar alterações</button></li>
                             <li><button class="dropdown-item text-danger" type="button" id="discardOverridesBtn">Descartar alterações</button></li>
@@ -161,7 +162,7 @@
                 >
                     Configuração
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end grade-menu-pattern">
                     <li>
                         <button class="dropdown-item" type="button" id="columnsBtnMobile">
                             Colunas
@@ -212,7 +213,7 @@
                         <i class="bi bi-lightning-charge"></i>
                         Executar
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end grade-menu-pattern">
                         <li>
                             <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#actionsManualWizardModal">
                                 <i class="bi bi-pencil-square"></i>
